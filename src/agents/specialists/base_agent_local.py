@@ -189,11 +189,14 @@ class BaseAgentLocal(ABC):
             )
             
             # Process inputs
+            logger.info(f"{self.__class__.__name__}: Processing image and prompt...")
             inputs = processor(
                 prompt_text,
                 [image],
                 return_tensors="pt",
             ).to(model.device)
+            
+            logger.info(f"{self.__class__.__name__}: Starting generation (this may take a while)...")
             
             # Generate
             generation_args = {
@@ -208,6 +211,8 @@ class BaseAgentLocal(ABC):
                     eos_token_id=processor.tokenizer.eos_token_id,
                     **generation_args,
                 )
+            
+            logger.info(f"{self.__class__.__name__}: Generation complete, decoding...")
             
             # Decode
             output_ids = output_ids[:, inputs["input_ids"].shape[1]:]

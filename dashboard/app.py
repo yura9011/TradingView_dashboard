@@ -6,12 +6,21 @@ Run: python -m dashboard.app
 import os
 import sys
 import json
+import logging
 import threading
 import queue
 from pathlib import Path
 from datetime import datetime
 
 from flask import Flask, render_template, jsonify, send_from_directory, request
+
+# Filter out HTTP 200 logs from werkzeug
+class NoSuccessFilter(logging.Filter):
+    def filter(self, record):
+        return '200 -' not in record.getMessage()
+
+# Apply filter to werkzeug logger
+logging.getLogger('werkzeug').addFilter(NoSuccessFilter())
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
