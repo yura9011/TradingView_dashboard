@@ -1,0 +1,58 @@
+# AI Trading Analysis Agent - Local Model Dependencies
+# For use with Phi-3.5-vision-instruct local model
+
+# ============================================
+# CORE DEPENDENCIES
+# ============================================
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+PyYAML>=6.0
+
+# ============================================
+# TRADINGVIEW DATA
+# ============================================
+tradingview-screener>=3.0.0
+
+# ============================================
+# IMAGE PROCESSING
+# ============================================
+Pillow>=10.0.0
+selenium>=4.15.0
+
+# ============================================
+# DATABASE
+# ============================================
+# SQLite is built-in to Python
+
+# ============================================
+# WEB DASHBOARD
+# ============================================
+Flask>=3.0.0
+
+# ============================================
+# LOCAL AI MODEL (Phi-3.5-vision)
+# ============================================
+# PyTorch - Install based on your system:
+# - CPU only: pip install torch torchvision
+# - CUDA 11.8: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+# - CUDA 12.1: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Transformers for Phi-3.5
+transformers>=4.36.0
+
+# Accelerate for efficient model loading
+accelerate>=0.25.0
+
+# Flash Attention 2 (optional, for faster inference on NVIDIA GPUs)
+# Requires CUDA toolkit installed
+# pip install flash-attn --no-build-isolation
+
+# ============================================
+# OPTIONAL: DEVELOPMENT
+# ============================================
+# pytest>=7.0.0
+# black>=23.0.0
+# ruff>=0.1.0
