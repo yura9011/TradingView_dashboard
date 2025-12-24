@@ -1,6 +1,15 @@
 """
 Phi-3.5 Vision Local Client for Chart Analysis
 Uses microsoft/Phi-3.5-vision-instruct for multimodal analysis.
+
+NOTE: This is a standalone client for direct model usage.
+For the multi-agent architecture, use the agents in src/agents/specialists/*_local.py
+which share a single model instance via LocalModelManager.
+
+This client can be used for:
+- Testing the model directly
+- Single-shot analysis without the multi-agent pipeline
+- Custom integrations
 """
 
 import os

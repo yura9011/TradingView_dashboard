@@ -5,7 +5,7 @@ Trend Analyst Agent (Local) - Uses Phi-3.5-vision-instruct.
 import logging
 from typing import Dict, Any, Optional
 
-from src.agents.specialists.base_agent_local import BaseAgentLocal, AgentResponse
+from src.agents.specialists.base_agent_local import BaseAgentLocal
 
 logger = logging.getLogger(__name__)
 

@@ -184,6 +184,7 @@ def serve_report_asset(filename):
 def run_bulk_analysis_worker(symbols: list, use_local_model: bool = True):
     """Worker thread for bulk analysis."""
     import asyncio
+    import time
     
     bulk_analysis_state["running"] = True
     bulk_analysis_state["total"] = len(symbols)
@@ -197,27 +198,36 @@ def run_bulk_analysis_worker(symbols: list, use_local_model: bool = True):
     else:
         from main_multiagent import analyze_with_multiagent as analyze_func
     
-    for i, symbol in enumerate(symbols):
-        if not bulk_analysis_state["running"]:
-            break  # Cancelled
-        
-        bulk_analysis_state["current_symbol"] = symbol
-        bulk_analysis_state["progress"] = i
-        
-        try:
-            # Run analysis
-            asyncio.run(analyze_func(symbol.strip().upper()))
-            bulk_analysis_state["completed"].append(symbol)
-        except Exception as e:
-            bulk_analysis_state["errors"].append({
-                "symbol": symbol,
-                "error": str(e)
-            })
-        
-        bulk_analysis_state["progress"] = i + 1
+    # Create a single event loop for all analyses
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     
-    bulk_analysis_state["running"] = False
-    bulk_analysis_state["current_symbol"] = None
+    try:
+        for i, symbol in enumerate(symbols):
+            if not bulk_analysis_state["running"]:
+                break  # Cancelled
+            
+            bulk_analysis_state["current_symbol"] = symbol
+            bulk_analysis_state["progress"] = i
+            
+            try:
+                # Run analysis in the shared event loop
+                loop.run_until_complete(analyze_func(symbol.strip().upper()))
+                bulk_analysis_state["completed"].append(symbol)
+            except Exception as e:
+                bulk_analysis_state["errors"].append({
+                    "symbol": symbol,
+                    "error": str(e)
+                })
+            
+            bulk_analysis_state["progress"] = i + 1
+            
+            # Small delay between analyses to prevent resource exhaustion
+            time.sleep(1)
+    finally:
+        loop.close()
+        bulk_analysis_state["running"] = False
+        bulk_analysis_state["current_symbol"] = None
 
 
 @app.route("/api/bulk/start", methods=["POST"])
@@ -288,11 +298,25 @@ def load_excel_symbols():
         
         # Get first column as symbols
         symbols = df.iloc[:, 0].dropna().astype(str).tolist()
-        symbols = [s.strip().upper() for s in symbols if s.strip() and not s.startswith("Ticker")]
+        
+        # Filter out headers and invalid entries
+        filtered_symbols = []
+        header_keywords = ["ticker", "symbol", "stock", "accion", "nombre", "name"]
+        
+        for s in symbols:
+            s_clean = s.strip().upper()
+            # Skip if empty, looks like a header, or contains spaces (likely description)
+            if not s_clean:
+                continue
+            if any(kw in s.lower() for kw in header_keywords):
+                continue
+            if " " in s_clean or len(s_clean) > 10:
+                continue
+            filtered_symbols.append(s_clean)
         
         return jsonify({
-            "symbols": symbols,
-            "count": len(symbols)
+            "symbols": filtered_symbols,
+            "count": len(filtered_symbols)
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500

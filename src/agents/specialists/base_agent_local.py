@@ -5,6 +5,7 @@ Base Agent Class for Local Models - Uses Phi-3.5-vision-instruct.
 import os
 import yaml
 import logging
+import threading
 from pathlib import Path
 from typing import Optional, Dict, Any
 from dataclasses import dataclass, field
@@ -33,66 +34,71 @@ class AgentResponse:
 
 
 class LocalModelManager:
-    """Singleton manager for local model to avoid loading multiple times."""
+    """Thread-safe singleton manager for local model to avoid loading multiple times."""
     
     _instance = None
+    _lock = threading.Lock()
     _model = None
     _processor = None
     _model_name = None
+    _model_lock = threading.Lock()
     
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            cls._instance = cls()
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = cls()
         return cls._instance
     
     def load_model(self, model_name: str = DEFAULT_MODEL):
-        """Load model if not already loaded."""
-        if self._model is not None and self._model_name == model_name:
+        """Load model if not already loaded (thread-safe)."""
+        with self._model_lock:
+            if self._model is not None and self._model_name == model_name:
+                return self._model, self._processor
+            
+            logger.info(f"Loading local model: {model_name}")
+            
+            # Determine device and dtype
+            if torch.cuda.is_available():
+                device_map = "auto"
+                torch_dtype = torch.bfloat16
+                logger.info(f"Using CUDA: {torch.cuda.get_device_name(0)}")
+            else:
+                device_map = "cpu"
+                torch_dtype = torch.float32
+                logger.info("Using CPU (this will be slow)")
+            
+            # Load processor
+            self._processor = AutoProcessor.from_pretrained(
+                model_name,
+                trust_remote_code=True,
+                num_crops=4,
+            )
+            
+            # Load model
+            model_kwargs = {
+                "torch_dtype": torch_dtype,
+                "trust_remote_code": True,
+                "device_map": device_map,
+            }
+            
+            # Try flash attention
+            if torch.cuda.is_available():
+                try:
+                    model_kwargs["_attn_implementation"] = "flash_attention_2"
+                except Exception:
+                    pass
+            
+            self._model = AutoModelForCausalLM.from_pretrained(
+                model_name,
+                **model_kwargs,
+            )
+            
+            self._model_name = model_name
+            logger.info("Model loaded successfully")
+            
             return self._model, self._processor
-        
-        logger.info(f"Loading local model: {model_name}")
-        
-        # Determine device and dtype
-        if torch.cuda.is_available():
-            device_map = "auto"
-            torch_dtype = torch.bfloat16
-            logger.info(f"Using CUDA: {torch.cuda.get_device_name(0)}")
-        else:
-            device_map = "cpu"
-            torch_dtype = torch.float32
-            logger.info("Using CPU (this will be slow)")
-        
-        # Load processor
-        self._processor = AutoProcessor.from_pretrained(
-            model_name,
-            trust_remote_code=True,
-            num_crops=4,
-        )
-        
-        # Load model
-        model_kwargs = {
-            "torch_dtype": torch_dtype,
-            "trust_remote_code": True,
-            "device_map": device_map,
-        }
-        
-        # Try flash attention
-        if torch.cuda.is_available():
-            try:
-                model_kwargs["_attn_implementation"] = "flash_attention_2"
-            except Exception:
-                pass
-        
-        self._model = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            **model_kwargs,
-        )
-        
-        self._model_name = model_name
-        logger.info("Model loaded successfully")
-        
-        return self._model, self._processor
     
     def get_model(self):
         return self._model
@@ -144,7 +150,12 @@ class BaseAgentLocal(ABC):
             AgentResponse with parsed results
         """
         try:
-            # Load model (lazy, shared)
+            # Validate image path
+            image_file = Path(image_path)
+            if not image_file.exists():
+                raise FileNotFoundError(f"Chart image not found: {image_path}")
+            
+            # Load model (lazy, shared, thread-safe)
             model, processor = self.model_manager.load_model(self.model_name)
             
             # Load image
@@ -197,6 +208,16 @@ class BaseAgentLocal(ABC):
                 clean_up_tokenization_spaces=False,
             )[0]
             
+            # Validate response
+            if not raw_text or not raw_text.strip():
+                logger.warning(f"{self.__class__.__name__} returned empty response")
+                return AgentResponse(
+                    raw_text="",
+                    parsed={},
+                    success=False,
+                    error="Model returned empty response",
+                )
+            
             logger.info(f"{self.__class__.__name__} analysis complete")
             logger.debug(f"Raw response: {raw_text[:500]}")
             
@@ -209,6 +230,14 @@ class BaseAgentLocal(ABC):
                 success=True,
             )
             
+        except FileNotFoundError as e:
+            logger.error(f"{self.__class__.__name__} failed: {e}")
+            return AgentResponse(
+                raw_text="",
+                parsed={},
+                success=False,
+                error=str(e),
+            )
         except Exception as e:
             logger.error(f"{self.__class__.__name__} failed: {e}")
             return AgentResponse(

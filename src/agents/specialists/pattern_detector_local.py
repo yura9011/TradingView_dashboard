@@ -6,7 +6,7 @@ import re
 import logging
 from typing import Dict, Any, Optional, Tuple
 
-from src.agents.specialists.base_agent_local import BaseAgentLocal, AgentResponse
+from src.agents.specialists.base_agent_local import BaseAgentLocal
 
 logger = logging.getLogger(__name__)
 
