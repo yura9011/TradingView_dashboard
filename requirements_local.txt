@@ -42,8 +42,9 @@ openpyxl>=3.1.0
 torch>=2.0.0
 torchvision>=0.15.0
 
-# Transformers for Phi-3.5
-transformers>=4.36.0
+# Transformers for Phi-3.5 - IMPORTANT: Version must be <=4.48.3 due to DynamicCache compatibility
+# See: https://discuss.huggingface.co/t/cannot-solve-dynamiccache-seen-tokens-error/168439
+transformers>=4.36.0,<=4.48.3
 
 # Accelerate for efficient model loading
 accelerate>=0.25.0
