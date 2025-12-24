@@ -1,47 +1,119 @@
-/* AI Trading Analysis Dashboard - Dark Theme */
+/* ============================================
+   AI Trading Analysis Dashboard
+   Premium Fintech Design System
+   ============================================ */
 
+/* CSS Variables - Design Tokens */
 :root {
-    --bg-primary: #0d1117;
-    --bg-secondary: #161b22;
-    --bg-tertiary: #21262d;
-    --text-primary: #f0f6fc;
-    --text-secondary: #8b949e;
-    --accent-green: #3fb950;
-    --accent-red: #f85149;
-    --accent-yellow: #d29922;
-    --accent-blue: #58a6ff;
-    --border-color: #30363d;
-    --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    /* Colors - Dark Theme */
+    --bg-base: #0a0a0f;
+    --bg-surface: #12121a;
+    --bg-elevated: #1a1a24;
+    --bg-hover: #22222e;
+    
+    /* Glass Effect */
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    
+    /* Text */
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0b0;
+    --text-muted: #606070;
+    
+    /* Accent Colors */
+    --accent-primary: #6366f1;
+    --accent-primary-glow: rgba(99, 102, 241, 0.3);
+    --accent-success: #10b981;
+    --accent-success-glow: rgba(16, 185, 129, 0.2);
+    --accent-warning: #f59e0b;
+    --accent-warning-glow: rgba(245, 158, 11, 0.2);
+    --accent-danger: #ef4444;
+    --accent-danger-glow: rgba(239, 68, 68, 0.2);
+    --accent-info: #3b82f6;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    --gradient-success: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    --gradient-surface: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%);
+    
+    /* Borders */
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-default: rgba(255, 255, 255, 0.1);
+    
+    /* Radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    
+    /* Shadows */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --shadow-glow: 0 0 40px var(--accent-primary-glow);
+    
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-base: 250ms ease;
+    --transition-slow: 400ms ease;
 }
 
-* {
+/* Reset & Base */
+*, *::before, *::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-    background: var(--bg-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-base);
     color: var(--text-primary);
     line-height: 1.6;
     min-height: 100vh;
+    overflow-x: hidden;
 }
 
+/* Background Pattern */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15), transparent),
+        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(139, 92, 246, 0.1), transparent);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Container */
 .container {
-    max-width: 1400px;
+    max-width: 1440px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 24px;
 }
 
-/* Navbar */
+/* ============================================
+   Navigation
+   ============================================ */
 .navbar {
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
-    padding: 15px 0;
     position: sticky;
     top: 0;
     z-index: 100;
+    background: rgba(10, 10, 15, 0.8);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 16px 0;
 }
 
 .navbar .container {
@@ -51,44 +123,187 @@ body {
 }
 
 .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     color: var(--text-primary);
     text-decoration: none;
-    font-size: 1.4rem;
+    font-size: 1.25rem;
     font-weight: 700;
+    letter-spacing: -0.02em;
 }
 
-.nav-info {
+.logo::before {
+    content: '';
+    width: 32px;
+    height: 32px;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-links {
+    display: flex;
+    gap: 8px;
+}
+
+.nav-link {
+    padding: 8px 16px;
     color: var(--text-secondary);
-    font-size: 0.9rem;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    transition: var(--transition-fast);
 }
 
-/* Main Content */
+.nav-link:hover {
+    color: var(--text-primary);
+    background: var(--glass-bg);
+}
+
+.nav-link.active {
+    color: var(--accent-primary);
+    background: var(--accent-primary-glow);
+}
+
+/* ============================================
+   Main Content
+   ============================================ */
 main {
-    padding: 30px 0;
-    min-height: calc(100vh - 140px);
+    padding: 32px 0 64px;
+    min-height: calc(100vh - 80px);
 }
 
-/* Dashboard Header */
+/* ============================================
+   Dashboard Header
+   ============================================ */
 .dashboard-header {
-    margin-bottom: 30px;
+    margin-bottom: 32px;
 }
 
 .dashboard-header h1 {
     font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
     margin-bottom: 8px;
+    background: linear-gradient(135deg, #fff 0%, #a0a0b0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .subtitle {
     color: var(--text-secondary);
+    font-size: 1rem;
+    margin-bottom: 20px;
 }
 
-/* Signals Table */
-.signals-table-container {
-    background: var(--bg-secondary);
-    border-radius: 12px;
+/* ============================================
+   Cards & Surfaces
+   ============================================ */
+.card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 20px;
+    transition: var(--transition-base);
+}
+
+.card:hover {
+    border-color: var(--border-default);
+    box-shadow: var(--shadow-md);
+}
+
+.card h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Glass Card Variant */
+.card-glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+}
+
+/* ============================================
+   Stats Cards
+   ============================================ */
+.stats-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.stat-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    position: relative;
     overflow: hidden;
-    box-shadow: var(--shadow);
-    margin-bottom: 30px;
+    transition: var(--transition-base);
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-primary);
+    opacity: 0;
+    transition: var(--transition-base);
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.stat-card:hover::before {
+    opacity: 1;
+}
+
+.stat-card h3 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 4px;
+}
+
+.stat-card p {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.stat-card.candidate h3 { color: var(--accent-success); }
+.stat-card.candidate::before { background: var(--gradient-success); }
+
+.stat-card.pending h3 { color: var(--accent-warning); }
+.stat-card.pending::before { background: var(--accent-warning); }
+
+/* ============================================
+   Data Table
+   ============================================ */
+.signals-table-container {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 32px;
 }
 
 .signals-table {
@@ -96,62 +311,83 @@ main {
     border-collapse: collapse;
 }
 
-.signals-table th,
-.signals-table td {
-    padding: 16px 20px;
+.signals-table th {
+    background: var(--bg-elevated);
+    padding: 14px 20px;
     text-align: left;
-    border-bottom: 1px solid var(--border-color);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border-subtle);
 }
 
-.signals-table th {
-    background: var(--bg-tertiary);
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 0.5px;
+.signals-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: middle;
+}
+
+.signals-table tbody tr {
+    transition: var(--transition-fast);
 }
 
 .signals-table tbody tr:hover {
-    background: var(--bg-tertiary);
+    background: var(--bg-hover);
+}
+
+.signals-table tbody tr:last-child td {
+    border-bottom: none;
 }
 
 .signals-table .symbol {
-    font-size: 1.1rem;
+    font-weight: 600;
+    font-size: 1rem;
 }
 
-/* Badges */
+/* ============================================
+   Badges
+   ============================================ */
 .badge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: 6px 12px;
-    border-radius: 20px;
+    border-radius: 100px;
     font-size: 0.75rem;
     font-weight: 600;
+    letter-spacing: 0.02em;
 }
 
 .badge-success {
-    background: rgba(63, 185, 80, 0.2);
-    color: var(--accent-green);
+    background: var(--accent-success-glow);
+    color: var(--accent-success);
+    border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .badge-danger {
-    background: rgba(248, 81, 73, 0.2);
-    color: var(--accent-red);
+    background: var(--accent-danger-glow);
+    color: var(--accent-danger);
+    border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .badge-warning {
-    background: rgba(210, 153, 34, 0.2);
-    color: var(--accent-yellow);
+    background: var(--accent-warning-glow);
+    color: var(--accent-warning);
+    border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
-/* Progress Bar */
+/* ============================================
+   Progress Bar
+   ============================================ */
 .progress-bar {
     position: relative;
-    background: var(--bg-tertiary);
-    border-radius: 10px;
-    height: 24px;
+    background: var(--bg-elevated);
+    border-radius: 100px;
+    height: 28px;
     overflow: hidden;
-    min-width: 100px;
+    min-width: 120px;
 }
 
 .progress-bar .progress {
@@ -159,163 +395,199 @@ main {
     top: 0;
     left: 0;
     height: 100%;
-    background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
-    border-radius: 10px;
-    transition: width 0.3s ease;
+    background: var(--gradient-primary);
+    border-radius: 100px;
+    transition: width var(--transition-slow);
 }
 
 .progress-bar span {
     position: relative;
     z-index: 1;
-    display: block;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
     font-size: 0.8rem;
     font-weight: 600;
-    line-height: 24px;
 }
 
-/* Trend */
-.trend-up { color: var(--accent-green); }
-.trend-down { color: var(--accent-red); }
-.trend-sideways { color: var(--text-secondary); }
-
-/* Buttons */
-.btn {
-    display: inline-block;
-    padding: 8px 16px;
-    border-radius: 6px;
-    text-decoration: none;
-    font-size: 0.85rem;
+/* ============================================
+   Trend Indicators
+   ============================================ */
+.trend-up {
+    color: var(--accent-success);
     font-weight: 500;
-    transition: all 0.2s ease;
+}
+
+.trend-down {
+    color: var(--accent-danger);
+    font-weight: 500;
+}
+
+.trend-sideways {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Wyckoff Phases */
+.phase-accumulation { color: var(--accent-success); }
+.phase-markup { color: #34d399; }
+.phase-distribution { color: var(--accent-warning); }
+.phase-markdown { color: var(--accent-danger); }
+.phase-unclear { color: var(--text-muted); }
+
+/* ============================================
+   Buttons
+   ============================================ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
     cursor: pointer;
     border: none;
+    transition: var(--transition-fast);
 }
 
 .btn-primary {
-    background: var(--accent-blue);
+    background: var(--gradient-primary);
     color: white;
+    box-shadow: 0 4px 12px var(--accent-primary-glow);
 }
 
 .btn-primary:hover {
-    background: #4393e6;
     transform: translateY(-1px);
+    box-shadow: 0 6px 20px var(--accent-primary-glow);
 }
 
-/* Stats Summary */
-.stats-summary {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
+.btn-secondary {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border-default);
 }
 
-.stat-card {
-    background: var(--bg-secondary);
-    border-radius: 12px;
-    padding: 24px;
-    text-align: center;
-    box-shadow: var(--shadow);
+.btn-secondary:hover {
+    background: var(--bg-hover);
+    border-color: var(--text-muted);
 }
 
-.stat-card h3 {
-    font-size: 2.5rem;
-    margin-bottom: 8px;
+.btn-danger {
+    background: var(--accent-danger);
+    color: white;
 }
 
-.stat-card.candidate h3 { color: var(--accent-green); }
-.stat-card.pending h3 { color: var(--accent-yellow); }
-
-.stat-card p {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
+.btn-danger:hover {
+    background: #dc2626;
 }
 
-/* Detail Page */
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn-large {
+    padding: 14px 28px;
+    font-size: 1rem;
+}
+
+/* ============================================
+   Detail Page
+   ============================================ */
 .detail-header {
-    margin-bottom: 30px;
+    margin-bottom: 32px;
 }
 
 .back-link {
-    color: var(--accent-blue);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
     text-decoration: none;
-    font-size: 0.9rem;
-    margin-bottom: 10px;
-    display: inline-block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 16px;
+    transition: var(--transition-fast);
 }
 
 .back-link:hover {
-    text-decoration: underline;
+    color: var(--accent-primary);
 }
 
 .detail-header h1 {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 16px;
     font-size: 2rem;
-    margin: 10px 0;
-}
-
-/* Cards */
-.card {
-    background: var(--bg-secondary);
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 20px;
-    box-shadow: var(--shadow);
-}
-
-.card h2 {
-    margin-bottom: 16px;
-    font-size: 1.2rem;
-    color: var(--text-primary);
+    font-weight: 700;
+    letter-spacing: -0.03em;
 }
 
 .detail-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 20px;
+}
+
+@media (max-width: 1024px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Analysis Content */
 .analysis-content {
-    background: var(--bg-tertiary);
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 20px;
-    border-left: 4px solid var(--accent-blue);
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    border-left: 3px solid var(--accent-primary);
+    margin-bottom: 24px;
 }
 
+.analysis-content p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
+/* Metrics Grid */
 .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
 }
 
 .metric {
-    background: var(--bg-tertiary);
-    border-radius: 8px;
-    padding: 12px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    text-align: center;
 }
 
 .metric label {
     display: block;
-    color: var(--text-secondary);
-    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 600;
     text-transform: uppercase;
-    margin-bottom: 4px;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
 }
 
 .metric span {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
 }
 
 .confidence-value {
-    color: var(--accent-green);
+    color: var(--accent-success);
 }
 
-/* Levels */
+/* Levels Grid */
 .levels-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -323,56 +595,99 @@ main {
 }
 
 .level {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    padding: 20px;
     text-align: center;
-    padding: 16px;
-    background: var(--bg-tertiary);
-    border-radius: 8px;
 }
 
 .level label {
     display: block;
-    color: var(--text-secondary);
-    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
     margin-bottom: 8px;
 }
 
 .level span {
-    font-size: 1.2rem;
-    font-weight: 600;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
 }
 
-/* Chart */
+/* Chart Container */
 .chart-container {
     text-align: center;
 }
 
 .chart-image {
     max-width: 100%;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
 }
 
-/* Debug */
+/* Reasoning Sections */
+.reasoning-card {
+    grid-column: 1 / -1;
+}
+
+.reasoning-section {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin-bottom: 16px;
+    border-left: 3px solid var(--accent-info);
+}
+
+.reasoning-section:last-child {
+    margin-bottom: 0;
+}
+
+.reasoning-section h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+}
+
+.reasoning-section p {
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.reasoning-text {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Debug Card */
 .debug-card details {
     cursor: pointer;
 }
 
 .debug-card summary {
-    color: var(--accent-blue);
+    color: var(--accent-primary);
+    font-weight: 500;
     padding: 8px 0;
 }
 
 .debug-json {
-    background: var(--bg-tertiary);
-    border-radius: 8px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
     padding: 16px;
     overflow-x: auto;
     font-size: 0.8rem;
+    font-family: 'JetBrains Mono', monospace;
     color: var(--text-secondary);
-    margin-top: 10px;
+    margin-top: 12px;
 }
 
 /* History Table */
+.history-card {
+    grid-column: 1 / -1;
+}
+
 .history-table {
     width: 100%;
     border-collapse: collapse;
@@ -380,50 +695,69 @@ main {
 
 .history-table th,
 .history-table td {
-    padding: 12px;
+    padding: 12px 16px;
     text-align: left;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .history-table th {
-    color: var(--text-secondary);
-    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
 }
 
 .history-table .current {
-    background: var(--bg-tertiary);
+    background: var(--accent-primary-glow);
 }
 
-/* Empty State */
+/* ============================================
+   Empty State
+   ============================================ */
 .empty-state {
     text-align: center;
-    padding: 60px 20px;
+    padding: 80px 20px;
     color: var(--text-secondary);
+}
+
+.empty-state p {
+    margin-bottom: 16px;
 }
 
 .empty-state code {
-    display: block;
-    margin-top: 10px;
-    background: var(--bg-tertiary);
-    padding: 10px 20px;
-    border-radius: 6px;
-    font-family: monospace;
+    display: inline-block;
+    background: var(--bg-elevated);
+    padding: 12px 24px;
+    border-radius: var(--radius-sm);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
 }
 
-/* Footer */
+/* ============================================
+   Footer
+   ============================================ */
 .footer {
-    background: var(--bg-secondary);
-    border-top: 1px solid var(--border-color);
-    padding: 20px 0;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-subtle);
+    padding: 24px 0;
     text-align: center;
-    color: var(--text-secondary);
-    font-size: 0.85rem;
 }
 
-/* Responsive */
+.footer p {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
 @media (max-width: 768px) {
-    .detail-grid {
-        grid-template-columns: 1fr;
+    .container {
+        padding: 0 16px;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 1.5rem;
     }
     
     .signals-table {
@@ -432,91 +766,18 @@ main {
     
     .signals-table th,
     .signals-table td {
-        padding: 12px 10px;
+        padding: 12px;
     }
-}
-
-
-/* Reasoning Section */
-.reasoning-card {
-    background: var(--bg-secondary);
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: var(--shadow);
-}
-
-.reasoning-section {
-    background: var(--bg-tertiary);
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 16px;
-    border-left: 4px solid var(--accent-blue);
-}
-
-.reasoning-section:last-child {
-    margin-bottom: 0;
-}
-
-.reasoning-section h3 {
-    font-size: 1rem;
-    margin-bottom: 8px;
-    color: var(--text-primary);
-}
-
-.reasoning-section p {
-    margin-bottom: 8px;
-}
-
-.reasoning-section p:last-child {
-    margin-bottom: 0;
-}
-
-.reasoning-text {
-    color: var(--text-secondary);
-    font-style: italic;
-    line-height: 1.5;
-}
-
-.reasoning-section small {
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-}
-
-
-/* Wyckoff Phase Colors */
-.phase-accumulation {
-    color: var(--accent-green);
-    font-weight: 500;
-}
-
-.phase-markup {
-    color: var(--accent-green);
-    font-weight: 600;
-}
-
-.phase-distribution {
-    color: var(--accent-yellow);
-    font-weight: 500;
-}
-
-.phase-markdown {
-    color: var(--accent-red);
-    font-weight: 500;
-}
-
-.phase-unclear {
-    color: var(--text-secondary);
-}
-
-/* Metrics grid update for more items */
-.metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-}
-
-@media (max-width: 768px) {
+    
     .metrics-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .levels-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-summary {
+        grid-template-columns: 1fr;
     }
 }

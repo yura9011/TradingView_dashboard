@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ signal.symbol }} - Analysis Detail{% endblock %}
+{% block title %}{{ signal.symbol }} Analysis • TradingAI{% endblock %}
 
 {% block content %}
 <div class="detail-header">
@@ -8,29 +8,28 @@
     <h1>
         {{ signal.symbol }}
         {% if signal.signal_type == 'candidate' %}
-        <span class="badge badge-success">✅ CANDIDATE</span>
+        <span class="badge badge-success">Candidate</span>
         {% elif signal.signal_type == 'not_candidate' %}
-        <span class="badge badge-danger">❌ NOT VIABLE</span>
+        <span class="badge badge-danger">Not Viable</span>
         {% else %}
-        <span class="badge badge-warning">⏳ PENDING</span>
+        <span class="badge badge-warning">Pending</span>
         {% endif %}
     </h1>
-    <p class="timestamp">Last analyzed: {{ signal.timestamp }}</p>
+    <p class="subtitle" style="margin-top: 8px;">Analyzed: {{ signal.timestamp }}</p>
 </div>
 
 <div class="detail-grid">
-    <!-- Main Analysis Card -->
-    <div class="card analysis-card">
+    <!-- AI Analysis Summary -->
+    <div class="card">
         <h2>🧠 AI Analysis</h2>
         <div class="analysis-content">
-            <p>{{ signal.analysis_summary or 'No analysis available.' }}</p>
+            <p>{{ signal.analysis_summary or 'No analysis summary available.' }}</p>
         </div>
-
+        
         <div class="metrics-grid">
             <div class="metric">
                 <label>Pattern</label>
-                <span>{{ signal.pattern_detected|replace('_', ' ')|title if signal.pattern_detected != 'none' else 'None
-                    detected' }}</span>
+                <span>{{ signal.pattern_detected|replace('_', ' ')|title if signal.pattern_detected != 'none' else 'None' }}</span>
             </div>
             <div class="metric">
                 <label>Confidence</label>
@@ -38,159 +37,140 @@
             </div>
             <div class="metric">
                 <label>Trend</label>
-                <span>
-                    {% if signal.trend == 'up' %}📈 Uptrend
-                    {% elif signal.trend == 'down' %}📉 Downtrend
-                    {% else %}➡️ Sideways{% endif %}
-                    {% if signal.trend_strength %}({{ signal.trend_strength }}){% endif %}
+                <span class="{% if signal.trend == 'up' %}trend-up{% elif signal.trend == 'down' %}trend-down{% else %}trend-sideways{% endif %}">
+                    {% if signal.trend == 'up' %}↑ Bullish{% elif signal.trend == 'down' %}↓ Bearish{% else %}→ Sideways{% endif %}
                 </span>
             </div>
             <div class="metric">
-                <label>Wyckoff Phase</label>
-                <span>{{ signal.market_phase|title if signal.market_phase else 'N/A' }}</span>
+                <label>Strength</label>
+                <span>{{ signal.trend_strength|title if signal.trend_strength else 'N/A' }}</span>
             </div>
             <div class="metric">
-                <label>Elliott Wave</label>
-                <span>{{ signal.elliott_wave|title if signal.elliott_wave else 'N/A' }}</span>
+                <label>Wyckoff</label>
+                <span class="phase-{{ signal.market_phase or 'unclear' }}">{{ signal.market_phase|title if signal.market_phase else 'N/A' }}</span>
             </div>
             <div class="metric">
-                <label>Signal Type</label>
-                <span>{{ signal.signal_type|upper }}</span>
+                <label>Elliott</label>
+                <span>{{ signal.elliott_wave if signal.elliott_wave else 'N/A' }}</span>
             </div>
         </div>
     </div>
 
     <!-- Technical Levels -->
-    <div class="card levels-card">
-        <h2>📈 Technical Levels</h2>
+    <div class="card">
+        <h2>📊 Technical Levels</h2>
         <div class="levels-grid">
             <div class="level">
                 <label>Support</label>
-                <span>${{ '%.2f'|format(signal.support_level) if signal.support_level else 'N/A' }}</span>
+                <span style="color: var(--accent-success);">${{ '%.2f'|format(signal.support_level) if signal.support_level else '—' }}</span>
             </div>
             <div class="level">
                 <label>Resistance</label>
-                <span>${{ '%.2f'|format(signal.resistance_level) if signal.resistance_level else 'N/A' }}</span>
+                <span style="color: var(--accent-danger);">${{ '%.2f'|format(signal.resistance_level) if signal.resistance_level else '—' }}</span>
             </div>
-            <div class="level fibonacci">
+            <div class="level">
                 <label>Fibonacci</label>
-                <span>{{ signal.fibonacci_level or 'N/A' }}</span>
+                <span style="color: var(--accent-info);">{{ signal.fibonacci_level or '—' }}</span>
             </div>
         </div>
     </div>
 
-    <!-- Chart Image -->
-    <div class="card chart-card">
-        <h2>📸 Annotated Chart</h2>
+    <!-- Chart -->
+    <div class="card" style="grid-column: 1 / -1;">
+        <h2>📈 Annotated Chart</h2>
         {% if signal.chart_image_path %}
         {% set path_str = signal.chart_image_path|string %}
         {% set chart_filename = path_str.split('\\')[-1].split('/')[-1] %}
         <div class="chart-container">
-            <!-- Try reports folder first (annotated), fallback to charts (original) -->
             <img src="/reports/{{ chart_filename }}" alt="Chart for {{ signal.symbol }}" class="chart-image"
                 onerror="this.onerror=null; this.src='/charts/{{ chart_filename.replace('_chart.png', '.png') }}'">
         </div>
         {% else %}
-        <p class="no-chart">No chart image available</p>
+        <p style="color: var(--text-muted); text-align: center; padding: 40px;">No chart available</p>
         {% endif %}
     </div>
 
+    <!-- Detailed Reasoning -->
+    {% if signal.detailed_reasoning %}
+    {% set reasoning = signal.detailed_reasoning|fromjson if signal.detailed_reasoning else {} %}
+    <div class="card reasoning-card">
+        <h2>💡 Detailed Reasoning</h2>
+        
+        {% if reasoning.pattern and (reasoning.pattern.reasoning or reasoning.pattern.components) %}
+        <div class="reasoning-section">
+            <h3>Pattern Analysis</h3>
+            <p><strong>{{ reasoning.pattern.name|title if reasoning.pattern.name and reasoning.pattern.name != 'none' else 'None detected' }}</strong> 
+               ({{ (reasoning.pattern.confidence * 100)|int }}% confidence)</p>
+            {% if reasoning.pattern.components %}
+            <p><strong>Components:</strong> {{ reasoning.pattern.components }}</p>
+            {% endif %}
+            {% if reasoning.pattern.target %}
+            <p><strong>Target:</strong> {{ reasoning.pattern.target }}</p>
+            {% endif %}
+            {% if reasoning.pattern.invalidation %}
+            <p><strong>Invalidation:</strong> {{ reasoning.pattern.invalidation }}</p>
+            {% endif %}
+            {% if reasoning.pattern.reasoning %}
+            <p class="reasoning-text">{{ reasoning.pattern.reasoning }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% if reasoning.wyckoff and reasoning.wyckoff.phase and reasoning.wyckoff.phase != 'unclear' %}
+        <div class="reasoning-section" style="border-left-color: var(--accent-warning);">
+            <h3>Wyckoff Analysis</h3>
+            <p><strong>Phase:</strong> <span class="phase-{{ reasoning.wyckoff.phase }}">{{ reasoning.wyckoff.phase|title }}</span></p>
+            {% if reasoning.wyckoff.event %}
+            <p><strong>Event:</strong> {{ reasoning.wyckoff.event }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% if reasoning.elliott and (reasoning.elliott.wave or reasoning.elliott.wave_count) %}
+        <div class="reasoning-section" style="border-left-color: var(--accent-success);">
+            <h3>Elliott Wave</h3>
+            {% if reasoning.elliott.wave %}
+            <p><strong>Current Wave:</strong> {{ reasoning.elliott.wave }}</p>
+            {% endif %}
+            {% if reasoning.elliott.wave_count %}
+            <p><strong>Wave Count:</strong> {{ reasoning.elliott.wave_count }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% if reasoning.levels and (reasoning.levels.support_reason or reasoning.levels.resistance_reason) %}
+        <div class="reasoning-section" style="border-left-color: var(--accent-danger);">
+            <h3>Levels Justification</h3>
+            {% if reasoning.levels.support and reasoning.levels.support_reason %}
+            <p><strong>Support ${{ '%.2f'|format(reasoning.levels.support) }}:</strong> {{ reasoning.levels.support_reason }}</p>
+            {% endif %}
+            {% if reasoning.levels.resistance and reasoning.levels.resistance_reason %}
+            <p><strong>Resistance ${{ '%.2f'|format(reasoning.levels.resistance) }}:</strong> {{ reasoning.levels.resistance_reason }}</p>
+            {% endif %}
+            {% if reasoning.levels.key_level and reasoning.levels.key_level_reason %}
+            <p><strong>Key Level ${{ '%.2f'|format(reasoning.levels.key_level) }}:</strong> {{ reasoning.levels.key_level_reason }}</p>
+            {% endif %}
+            {% if reasoning.levels.fibonacci_confluence %}
+            <p><strong>Fibonacci:</strong> {{ reasoning.levels.fibonacci_confluence }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <!-- Debug Info -->
     <div class="card debug-card">
-        <h2>🔧 Debug Information</h2>
+        <h2>🔧 Raw Data</h2>
         <details>
-            <summary>Show Raw Data</summary>
+            <summary>Show JSON</summary>
             <pre class="debug-json">{{ signal|tojson(indent=2) }}</pre>
         </details>
     </div>
 </div>
 
-<!-- Detailed Reasoning Section -->
-{% if signal.detailed_reasoning %}
-<div class="card reasoning-card" style="margin-top: 20px;">
-    <h2>🧠 Detailed Reasoning</h2>
-    {% set reasoning = signal.detailed_reasoning|fromjson if signal.detailed_reasoning else {} %}
-    
-    {% if reasoning.pattern and (reasoning.pattern.reasoning or reasoning.pattern.components) %}
-    <div class="reasoning-section">
-        <h3>📊 Pattern Analysis</h3>
-        <p><strong>{{ reasoning.pattern.name|title if reasoning.pattern.name and reasoning.pattern.name != 'none' else 'None detected' }}</strong> 
-           ({{ (reasoning.pattern.confidence * 100)|int }}% confidence)</p>
-        {% if reasoning.pattern.components %}
-        <p><strong>Components:</strong> {{ reasoning.pattern.components }}</p>
-        {% endif %}
-        {% if reasoning.pattern.target %}
-        <p><strong>Target:</strong> {{ reasoning.pattern.target }}</p>
-        {% endif %}
-        {% if reasoning.pattern.invalidation %}
-        <p><strong>Invalidation:</strong> {{ reasoning.pattern.invalidation }}</p>
-        {% endif %}
-        {% if reasoning.pattern.reasoning %}
-        <p class="reasoning-text">{{ reasoning.pattern.reasoning }}</p>
-        {% endif %}
-    </div>
-    {% endif %}
-    
-    {% if reasoning.trend and reasoning.trend.reasoning %}
-    <div class="reasoning-section">
-        <h3>📈 Trend Analysis</h3>
-        <p><strong>{{ reasoning.trend.direction|title }}</strong> ({{ reasoning.trend.strength }})</p>
-        <p class="reasoning-text">{{ reasoning.trend.reasoning }}</p>
-    </div>
-    {% endif %}
-    
-    {% if reasoning.wyckoff and reasoning.wyckoff.phase and reasoning.wyckoff.phase != 'unclear' %}
-    <div class="reasoning-section">
-        <h3>🔄 Wyckoff Analysis</h3>
-        <p><strong>Phase:</strong> {{ reasoning.wyckoff.phase|title }}</p>
-        {% if reasoning.wyckoff.event %}
-        <p><strong>Event:</strong> {{ reasoning.wyckoff.event }}</p>
-        {% endif %}
-    </div>
-    {% endif %}
-    
-    {% if reasoning.elliott and (reasoning.elliott.wave or reasoning.elliott.wave_count) %}
-    <div class="reasoning-section">
-        <h3>🌊 Elliott Wave</h3>
-        {% if reasoning.elliott.wave %}
-        <p><strong>Current Wave:</strong> {{ reasoning.elliott.wave|title }}</p>
-        {% endif %}
-        {% if reasoning.elliott.wave_count %}
-        <p><strong>Wave Count:</strong> {{ reasoning.elliott.wave_count }}</p>
-        {% endif %}
-    </div>
-    {% endif %}
-    
-    {% if reasoning.levels and reasoning.levels.reasoning %}
-    <div class="reasoning-section">
-        <h3>📍 Levels Analysis</h3>
-        {% if reasoning.levels.support and reasoning.levels.support_reason %}
-        <p><strong>Support ${{ '%.2f'|format(reasoning.levels.support) }}:</strong> {{ reasoning.levels.support_reason }}</p>
-        {% endif %}
-        {% if reasoning.levels.resistance and reasoning.levels.resistance_reason %}
-        <p><strong>Resistance ${{ '%.2f'|format(reasoning.levels.resistance) }}:</strong> {{ reasoning.levels.resistance_reason }}</p>
-        {% endif %}
-        {% if reasoning.levels.key_level and reasoning.levels.key_level_reason %}
-        <p><strong>Key Level ${{ '%.2f'|format(reasoning.levels.key_level) }}:</strong> {{ reasoning.levels.key_level_reason }}</p>
-        {% endif %}
-        {% if reasoning.levels.fibonacci_confluence %}
-        <p><strong>Fibonacci:</strong> {{ reasoning.levels.fibonacci_confluence }}</p>
-        {% endif %}
-        <p class="reasoning-text">{{ reasoning.levels.reasoning }}</p>
-        {% if reasoning.levels.support_secondary or reasoning.levels.resistance_secondary %}
-        <p><small>
-            Secondary Support: ${{ '%.2f'|format(reasoning.levels.support_secondary) if reasoning.levels.support_secondary else 'N/A' }} |
-            Secondary Resistance: ${{ '%.2f'|format(reasoning.levels.resistance_secondary) if reasoning.levels.resistance_secondary else 'N/A' }}
-        </small></p>
-        {% endif %}
-    </div>
-    {% endif %}
-</div>
-{% endif %}
-
-<!-- Analysis History -->
+<!-- History -->
 {% if history and history|length > 1 %}
-<div class="card history-card">
+<div class="card history-card" style="margin-top: 20px;">
     <h2>📜 Analysis History</h2>
     <table class="history-table">
         <thead>
@@ -203,13 +183,16 @@
         </thead>
         <tbody>
             {% for h in history %}
-            <tr {% if h.id==signal.id %}class="current" {% endif %}>
+            <tr {% if h.id == signal.id %}class="current"{% endif %}>
                 <td>{{ h.timestamp[:16] }}</td>
                 <td>
-                    {% if h.signal_type == 'candidate' %}✅
-                    {% elif h.signal_type == 'not_candidate' %}❌
-                    {% else %}⏳{% endif %}
-                    {{ h.signal_type }}
+                    {% if h.signal_type == 'candidate' %}
+                    <span class="badge badge-success" style="font-size: 0.7rem;">Candidate</span>
+                    {% elif h.signal_type == 'not_candidate' %}
+                    <span class="badge badge-danger" style="font-size: 0.7rem;">Not Viable</span>
+                    {% else %}
+                    <span class="badge badge-warning" style="font-size: 0.7rem;">Pending</span>
+                    {% endif %}
                 </td>
                 <td>{{ (h.pattern_confidence * 100)|int }}%</td>
                 <td>{{ h.pattern_detected|replace('_', ' ')|title }}</td>

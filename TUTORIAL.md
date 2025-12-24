@@ -260,7 +260,7 @@ python dashboard/app.py
 
 ### Acceder al Dashboard
 
-Abre tu navegador en: **http://localhost:5000**
+Abre tu navegador en: **http://localhost:8080**
 
 ### Funcionalidades del Dashboard
 
@@ -271,7 +271,43 @@ Abre tu navegador en: **http://localhost:5000**
    - Análisis de tendencia (Wyckoff/Elliott)
    - Niveles de soporte/resistencia
    - Razonamiento detallado del modelo
-3. **Filtros**: Filtrar por tipo de señal, patrón, fecha
+
+---
+
+## 📋 Análisis Masivo (Bulk Analysis)
+
+### Acceder al Bulk Analysis
+
+1. Abre el dashboard: http://localhost:8080
+2. Click en "Bulk Analysis" en la navegación
+
+### Cargar Símbolos
+
+**Opción A - Desde Excel:**
+1. Click en "Upload Excel"
+2. Selecciona tu archivo .xlsx con los símbolos
+
+**Opción B - Manual:**
+- Los 268 símbolos del cliente ya vienen precargados
+- Puedes editar la lista directamente en el textarea
+
+### Ejecutar Análisis
+
+1. Verifica que "Use local model" esté marcado
+2. Click en "Start Analysis"
+3. El progreso se muestra en tiempo real
+4. Puedes detener en cualquier momento con "Stop"
+
+### Tiempo Estimado
+
+| GPU | Tiempo por símbolo | 268 símbolos |
+|-----|-------------------|--------------|
+| RTX 4090 | ~1 min | ~4.5 horas |
+| RTX 3080 | ~2 min | ~9 horas |
+| RTX 3060 | ~3 min | ~13 horas |
+| CPU | ~20 min | ~90 horas |
+
+💡 **Tip**: Ejecuta el análisis durante la noche para procesar todos los símbolos.
 
 ---
 

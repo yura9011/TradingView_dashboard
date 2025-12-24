@@ -3,15 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Trading Analysis Dashboard{% endblock %}</title>
+    <title>{% block title %}Trading Analysis{% endblock %}</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
 </head>
 <body>
     <nav class="navbar">
         <div class="container">
-            <a href="/" class="logo">🤖 Trading Analysis</a>
-            <div class="nav-info">
-                <span class="timestamp">{{ now.strftime('%Y-%m-%d %H:%M') if now else '' }}</span>
+            <a href="/" class="logo">TradingAI</a>
+            <div class="nav-links">
+                <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">Dashboard</a>
+                <a href="/bulk" class="nav-link {% if request.path == '/bulk' %}active{% endif %}">Bulk Analysis</a>
             </div>
         </div>
     </nav>
@@ -22,7 +33,7 @@
     
     <footer class="footer">
         <div class="container">
-            <p>AI Trading Analysis Agent &copy; 2024</p>
+            <p>AI Trading Analysis • Powered by Phi-3.5 Vision</p>
         </div>
     </footer>
 </body>
