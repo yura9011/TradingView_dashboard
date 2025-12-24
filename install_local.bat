@@ -74,11 +74,11 @@ python -c "import torch; print('       PyTorch', torch.__version__, '- CUDA:', t
 :: Install dependencies
 echo.
 echo [5/6] Instalando dependencias...
-pip install flask pandas openpyxl pydantic python-dotenv PyYAML Pillow selenium transformers accelerate tradingview-screener
+pip install --upgrade pip
+pip install -r "%~dp0requirements_local.txt" --quiet
 if errorlevel 1 (
-    echo ERROR: Fallo la instalacion de dependencias
-    pause
-    exit /b 1
+    echo       Reintentando instalacion individual...
+    pip install flask pandas openpyxl pydantic python-dotenv PyYAML Pillow selenium transformers accelerate tradingview-screener
 )
 echo       Dependencias instaladas
 

@@ -1,26 +1,25 @@
-# AI Trading Analysis Agent - Dependencies
+# AI Trading Analysis Agent - Dependencies (Cloud/Gemini Mode)
+# For local model, use: requirements_local.txt
 
 # Core
 pydantic>=2.0.0
 python-dotenv>=1.0.0
+PyYAML>=6.0
 
 # TradingView Data
 tradingview-screener>=3.0.0
 
-# AI/ML (M2)
-# google-generativeai>=0.3.0
+# AI/ML - Gemini API
+google-generativeai>=0.3.0
 
-# Image Processing (M3)
-# pillow>=10.0.0
+# Image Processing
+Pillow>=10.0.0
+selenium>=4.15.0
 
-# Notifications (M3)
+# Web Dashboard
+Flask>=3.0.0
+pandas>=2.0.0
+openpyxl>=3.1.0
+
+# Notifications (optional)
 # python-telegram-bot>=20.0
-
-# Web Server (Optional)
-# flask>=3.0.0
-# gunicorn>=21.0.0
-
-# Development
-# pytest>=7.0.0
-# black>=23.0.0
-# ruff>=0.1.0
