@@ -82,7 +82,8 @@ class LevelsCalculatorAgentLocal(BaseAgentLocal):
             desc_start = raw_text.find("DESCRIPTION:") + 12
             result["description"] = raw_text[desc_start:].strip()
         
-        logger.info(f"Levels: S={result['support']}, R={result['resistance']}, Key={result['key_level']}")
+        logger.info(f"Levels parsed: S={result['support']}, R={result['resistance']}, Key={result['key_level']}")
+        logger.debug(f"Levels raw response: {raw_text[:500]}")
         
         return result
     

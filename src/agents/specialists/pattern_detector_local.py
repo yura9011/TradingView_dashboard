@@ -68,6 +68,7 @@ class PatternDetectorAgentLocal(BaseAgentLocal):
             result["description"] = raw_text[desc_start:].strip()
         
         logger.info(f"Pattern detected: {result['pattern']} (confidence: {result['confidence']})")
+        logger.debug(f"Pattern raw response: {raw_text[:500]}")
         
         return result
     

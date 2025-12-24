@@ -183,9 +183,18 @@ class CoordinatorAgentLocal:
     ) -> CoordinatedAnalysis:
         """Synthesize findings from all agents into final decision."""
         
+        # Log raw responses for debugging
+        logger.info(f"Pattern agent success: {pattern.success}, error: {pattern.error}")
+        logger.info(f"Trend agent success: {trend.success}, error: {trend.error}")
+        logger.info(f"Levels agent success: {levels.success}, error: {levels.error}")
+        
         p = pattern.parsed
         t = trend.parsed
         l = levels.parsed
+        
+        logger.info(f"Parsed pattern: {p}")
+        logger.info(f"Parsed trend: {t}")
+        logger.info(f"Parsed levels: {l}")
         
         pattern_conf = p.get("confidence", 0.0)
         has_pattern = p.get("pattern", "none") != "none"

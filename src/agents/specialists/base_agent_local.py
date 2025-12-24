@@ -233,7 +233,7 @@ class BaseAgentLocal(ABC):
                 )
             
             logger.info(f"{self.__class__.__name__} analysis complete")
-            logger.debug(f"Raw response: {raw_text[:500]}")
+            logger.info(f"Raw response preview: {raw_text[:200]}...")
             
             # Parse response
             parsed = self._parse_response(raw_text)

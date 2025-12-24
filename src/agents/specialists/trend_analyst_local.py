@@ -78,6 +78,7 @@ class TrendAnalystAgentLocal(BaseAgentLocal):
             desc_start = raw_text.find("DESCRIPTION:") + 12
             result["description"] = raw_text[desc_start:].strip()
         
-        logger.info(f"Trend: {result['trend']} ({result['strength']}), Phase: {result['phase']}")
+        logger.info(f"Trend: {result['trend']} ({result['strength']}), Phase: {result['phase']}, Wave: {result['wave']}")
+        logger.debug(f"Trend raw response: {raw_text[:500]}")
         
         return result
