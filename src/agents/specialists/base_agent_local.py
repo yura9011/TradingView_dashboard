@@ -76,21 +76,28 @@ class LocalModelManager:
                 num_crops=4,
             )
             
-            # Load model
+            # Load model - explicitly disable flash attention if not installed
             model_kwargs = {
                 "torch_dtype": torch_dtype,
                 "trust_remote_code": True,
                 "device_map": device_map,
             }
             
-            # Try flash attention only if package is installed
+            # Check if flash_attn is installed before enabling
+            use_flash = False
             if torch.cuda.is_available():
                 try:
                     import flash_attn
-                    model_kwargs["_attn_implementation"] = "flash_attention_2"
-                    logger.info("Using Flash Attention 2")
+                    use_flash = True
+                    logger.info("Flash Attention 2 available")
                 except ImportError:
-                    logger.info("Flash Attention not installed, using default attention")
+                    logger.info("Flash Attention not installed, using eager attention")
+            
+            # Set attention implementation explicitly
+            if use_flash:
+                model_kwargs["_attn_implementation"] = "flash_attention_2"
+            else:
+                model_kwargs["_attn_implementation"] = "eager"
             
             self._model = AutoModelForCausalLM.from_pretrained(
                 model_name,
