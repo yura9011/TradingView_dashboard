@@ -1,0 +1,446 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk Analysis - Trading Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>📊 Bulk Analysis</h1>
+    <p class="subtitle">Analyze multiple stocks sequentially</p>
+    <a href="/" class="btn btn-secondary" style="margin-top: 10px;">← Back to Dashboard</a>
+</div>
+
+<div class="bulk-container">
+    <!-- Input Section -->
+    <div class="bulk-input-section">
+        <h2>📝 Enter Symbols</h2>
+        
+        <!-- Excel Upload -->
+        <div class="upload-section">
+            <label for="excel-file" class="upload-label">
+                📁 Load from Excel file
+            </label>
+            <input type="file" id="excel-file" accept=".xlsx,.xls" style="display:none;">
+            <button id="upload-btn" class="btn btn-secondary">Choose File</button>
+            <span id="file-name" class="file-name"></span>
+        </div>
+        
+        <div class="divider">or enter manually</div>
+        
+        <!-- Manual Input -->
+        <div class="manual-input">
+            <textarea id="symbols-input" placeholder="Enter symbols, one per line:&#10;AAPL&#10;MSFT&#10;GOOGL&#10;TSLA"></textarea>
+        </div>
+        
+        <!-- Options -->
+        <div class="options-section">
+            <label class="checkbox-label">
+                <input type="checkbox" id="use-local-model" checked>
+                Use local model (Phi-3.5) - No API needed
+            </label>
+        </div>
+        
+        <!-- Actions -->
+        <div class="actions-section">
+            <button id="start-btn" class="btn btn-primary btn-large">
+                🚀 Start Analysis
+            </button>
+            <button id="stop-btn" class="btn btn-danger btn-large" disabled>
+                ⏹️ Stop
+            </button>
+        </div>
+    </div>
+    
+    <!-- Progress Section -->
+    <div class="bulk-progress-section">
+        <h2>📈 Progress</h2>
+        
+        <div class="progress-info">
+            <div class="progress-bar-large">
+                <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="progress-text">
+                <span id="progress-count">0 / 0</span>
+                <span id="progress-percent">0%</span>
+            </div>
+        </div>
+        
+        <div class="current-analysis">
+            <span class="label">Currently analyzing:</span>
+            <span id="current-symbol" class="symbol">-</span>
+        </div>
+        
+        <div class="stats-row">
+            <div class="stat-box success">
+                <span id="completed-count">0</span>
+                <label>Completed</label>
+            </div>
+            <div class="stat-box error">
+                <span id="error-count">0</span>
+                <label>Errors</label>
+            </div>
+            <div class="stat-box pending">
+                <span id="pending-count">0</span>
+                <label>Pending</label>
+            </div>
+        </div>
+        
+        <!-- Error Log -->
+        <div id="error-log" class="error-log" style="display:none;">
+            <h3>⚠️ Errors</h3>
+            <ul id="error-list"></ul>
+        </div>
+    </div>
+</div>
+
+<style>
+.bulk-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.bulk-input-section, .bulk-progress-section {
+    background: var(--card-bg, #1e1e2e);
+    border-radius: 12px;
+    padding: 25px;
+}
+
+.bulk-input-section h2, .bulk-progress-section h2 {
+    margin-bottom: 20px;
+    color: var(--text-primary, #fff);
+}
+
+.upload-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.upload-label {
+    font-weight: 500;
+}
+
+.file-name {
+    color: var(--text-secondary, #888);
+    font-size: 0.9em;
+}
+
+.divider {
+    text-align: center;
+    color: var(--text-secondary, #888);
+    margin: 20px 0;
+    position: relative;
+}
+
+.divider::before, .divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 40%;
+    height: 1px;
+    background: var(--border-color, #333);
+}
+
+.divider::before { left: 0; }
+.divider::after { right: 0; }
+
+.manual-input textarea {
+    width: 100%;
+    height: 200px;
+    background: var(--input-bg, #2a2a3e);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 8px;
+    padding: 15px;
+    color: var(--text-primary, #fff);
+    font-family: monospace;
+    font-size: 14px;
+    resize: vertical;
+}
+
+.options-section {
+    margin: 20px 0;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.checkbox-label input {
+    width: 18px;
+    height: 18px;
+}
+
+.actions-section {
+    display: flex;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.btn-large {
+    padding: 15px 30px;
+    font-size: 16px;
+    flex: 1;
+}
+
+.btn-danger {
+    background: #dc3545;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #c82333;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Progress Section */
+.progress-bar-large {
+    height: 30px;
+    background: var(--input-bg, #2a2a3e);
+    border-radius: 15px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    transition: width 0.5s ease;
+}
+
+.progress-text {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-secondary, #888);
+}
+
+.current-analysis {
+    margin: 25px 0;
+    padding: 15px;
+    background: var(--input-bg, #2a2a3e);
+    border-radius: 8px;
+    text-align: center;
+}
+
+.current-analysis .label {
+    color: var(--text-secondary, #888);
+}
+
+.current-analysis .symbol {
+    display: block;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--accent-color, #4CAF50);
+    margin-top: 5px;
+}
+
+.stats-row {
+    display: flex;
+    gap: 15px;
+}
+
+.stat-box {
+    flex: 1;
+    text-align: center;
+    padding: 15px;
+    border-radius: 8px;
+    background: var(--input-bg, #2a2a3e);
+}
+
+.stat-box span {
+    display: block;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.stat-box.success span { color: #4CAF50; }
+.stat-box.error span { color: #dc3545; }
+.stat-box.pending span { color: #ffc107; }
+
+.stat-box label {
+    color: var(--text-secondary, #888);
+    font-size: 0.9em;
+}
+
+.error-log {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    border-radius: 8px;
+}
+
+.error-log h3 {
+    color: #dc3545;
+    margin-bottom: 10px;
+}
+
+.error-log ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.error-log li {
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(220, 53, 69, 0.2);
+    font-size: 0.9em;
+}
+
+@media (max-width: 900px) {
+    .bulk-container {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadBtn = document.getElementById('upload-btn');
+    const excelFile = document.getElementById('excel-file');
+    const fileName = document.getElementById('file-name');
+    const symbolsInput = document.getElementById('symbols-input');
+    const startBtn = document.getElementById('start-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const useLocalModel = document.getElementById('use-local-model');
+    
+    let statusInterval = null;
+    
+    // File upload
+    uploadBtn.addEventListener('click', () => excelFile.click());
+    
+    excelFile.addEventListener('change', async function() {
+        if (!this.files[0]) return;
+        
+        fileName.textContent = this.files[0].name;
+        
+        const formData = new FormData();
+        formData.append('file', this.files[0]);
+        
+        try {
+            const response = await fetch('/api/bulk/load-excel', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
+            
+            symbolsInput.value = data.symbols.join('\n');
+            alert(`Loaded ${data.count} symbols from Excel`);
+        } catch (err) {
+            alert('Error loading file: ' + err.message);
+        }
+    });
+    
+    // Start analysis
+    startBtn.addEventListener('click', async function() {
+        const symbols = symbolsInput.value
+            .split('\n')
+            .map(s => s.trim())
+            .filter(s => s.length > 0);
+        
+        if (symbols.length === 0) {
+            alert('Please enter at least one symbol');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/bulk/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    symbols: symbols,
+                    use_local_model: useLocalModel.checked
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
+            
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            
+            // Start polling status
+            statusInterval = setInterval(updateStatus, 2000);
+            updateStatus();
+            
+        } catch (err) {
+            alert('Error starting analysis: ' + err.message);
+        }
+    });
+    
+    // Stop analysis
+    stopBtn.addEventListener('click', async function() {
+        try {
+            await fetch('/api/bulk/stop', { method: 'POST' });
+            stopBtn.disabled = true;
+        } catch (err) {
+            console.error('Error stopping:', err);
+        }
+    });
+    
+    // Update status
+    async function updateStatus() {
+        try {
+            const response = await fetch('/api/bulk/status');
+            const data = await response.json();
+            
+            // Update progress bar
+            const percent = data.total > 0 ? (data.progress / data.total * 100) : 0;
+            document.getElementById('progress-fill').style.width = percent + '%';
+            document.getElementById('progress-count').textContent = `${data.progress} / ${data.total}`;
+            document.getElementById('progress-percent').textContent = Math.round(percent) + '%';
+            
+            // Update current symbol
+            document.getElementById('current-symbol').textContent = data.current_symbol || '-';
+            
+            // Update stats
+            document.getElementById('completed-count').textContent = data.completed;
+            document.getElementById('error-count').textContent = data.errors;
+            document.getElementById('pending-count').textContent = Math.max(0, data.total - data.progress);
+            
+            // Update errors
+            if (data.error_details && data.error_details.length > 0) {
+                document.getElementById('error-log').style.display = 'block';
+                document.getElementById('error-list').innerHTML = data.error_details
+                    .map(e => `<li><strong>${e.symbol}:</strong> ${e.error}</li>`)
+                    .join('');
+            }
+            
+            // Check if finished
+            if (!data.running && statusInterval) {
+                clearInterval(statusInterval);
+                statusInterval = null;
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                
+                if (data.progress === data.total && data.total > 0) {
+                    alert(`Analysis complete! ${data.completed} successful, ${data.errors} errors.`);
+                }
+            }
+            
+        } catch (err) {
+            console.error('Error fetching status:', err);
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -6,10 +6,12 @@ Run: python -m dashboard.app
 import os
 import sys
 import json
+import threading
+import queue
 from pathlib import Path
 from datetime import datetime
 
-from flask import Flask, render_template, jsonify, send_from_directory
+from flask import Flask, render_template, jsonify, send_from_directory, request
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -17,6 +19,17 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.database import get_database
 
 app = Flask(__name__)
+
+# Bulk analysis state
+bulk_analysis_state = {
+    "running": False,
+    "current_symbol": None,
+    "progress": 0,
+    "total": 0,
+    "completed": [],
+    "errors": [],
+    "queue": queue.Queue(),
+}
 
 # Custom Jinja2 filter for parsing JSON
 @app.template_filter('fromjson')
@@ -164,6 +177,133 @@ def serve_report_asset(filename):
     return send_from_directory(REPORTS_DIR, filename)
 
 
+# ============================================================
+# BULK ANALYSIS ENDPOINTS
+# ============================================================
+
+def run_bulk_analysis_worker(symbols: list, use_local_model: bool = True):
+    """Worker thread for bulk analysis."""
+    import asyncio
+    
+    bulk_analysis_state["running"] = True
+    bulk_analysis_state["total"] = len(symbols)
+    bulk_analysis_state["progress"] = 0
+    bulk_analysis_state["completed"] = []
+    bulk_analysis_state["errors"] = []
+    
+    # Import analysis function based on model choice
+    if use_local_model:
+        from main_multiagent_local import analyze_with_local_model as analyze_func
+    else:
+        from main_multiagent import analyze_with_multiagent as analyze_func
+    
+    for i, symbol in enumerate(symbols):
+        if not bulk_analysis_state["running"]:
+            break  # Cancelled
+        
+        bulk_analysis_state["current_symbol"] = symbol
+        bulk_analysis_state["progress"] = i
+        
+        try:
+            # Run analysis
+            asyncio.run(analyze_func(symbol.strip().upper()))
+            bulk_analysis_state["completed"].append(symbol)
+        except Exception as e:
+            bulk_analysis_state["errors"].append({
+                "symbol": symbol,
+                "error": str(e)
+            })
+        
+        bulk_analysis_state["progress"] = i + 1
+    
+    bulk_analysis_state["running"] = False
+    bulk_analysis_state["current_symbol"] = None
+
+
+@app.route("/api/bulk/start", methods=["POST"])
+def start_bulk_analysis():
+    """Start bulk analysis for multiple symbols."""
+    if bulk_analysis_state["running"]:
+        return jsonify({"error": "Analysis already running"}), 400
+    
+    data = request.get_json()
+    symbols = data.get("symbols", [])
+    use_local = data.get("use_local_model", True)
+    
+    if not symbols:
+        return jsonify({"error": "No symbols provided"}), 400
+    
+    # Clean symbols
+    symbols = [s.strip().upper() for s in symbols if s.strip()]
+    
+    # Start worker thread
+    thread = threading.Thread(
+        target=run_bulk_analysis_worker,
+        args=(symbols, use_local),
+        daemon=True
+    )
+    thread.start()
+    
+    return jsonify({
+        "status": "started",
+        "total": len(symbols),
+        "symbols": symbols
+    })
+
+
+@app.route("/api/bulk/status")
+def bulk_analysis_status():
+    """Get current bulk analysis status."""
+    return jsonify({
+        "running": bulk_analysis_state["running"],
+        "current_symbol": bulk_analysis_state["current_symbol"],
+        "progress": bulk_analysis_state["progress"],
+        "total": bulk_analysis_state["total"],
+        "completed": len(bulk_analysis_state["completed"]),
+        "errors": len(bulk_analysis_state["errors"]),
+        "error_details": bulk_analysis_state["errors"][-5:],  # Last 5 errors
+    })
+
+
+@app.route("/api/bulk/stop", methods=["POST"])
+def stop_bulk_analysis():
+    """Stop running bulk analysis."""
+    bulk_analysis_state["running"] = False
+    return jsonify({"status": "stopping"})
+
+
+@app.route("/api/bulk/load-excel", methods=["POST"])
+def load_excel_symbols():
+    """Load symbols from uploaded Excel file."""
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+    
+    file = request.files["file"]
+    if not file.filename.endswith((".xlsx", ".xls")):
+        return jsonify({"error": "File must be Excel (.xlsx or .xls)"}), 400
+    
+    try:
+        import pandas as pd
+        df = pd.read_excel(file)
+        
+        # Get first column as symbols
+        symbols = df.iloc[:, 0].dropna().astype(str).tolist()
+        symbols = [s.strip().upper() for s in symbols if s.strip() and not s.startswith("Ticker")]
+        
+        return jsonify({
+            "symbols": symbols,
+            "count": len(symbols)
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/bulk")
+def bulk_analysis_page():
+    """Bulk analysis page."""
+    return render_template("bulk.html")
+
+
 if __name__ == "__main__":
     print("🚀 Starting Dashboard on http://localhost:8080")
-    app.run(debug=True, port=8080)
+    app.run(debug=True, port=8080, threaded=True)
