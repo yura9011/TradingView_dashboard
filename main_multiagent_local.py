@@ -14,17 +14,21 @@ import logging
 import argparse
 from pathlib import Path
 
-# Fix Windows encoding for emojis
+# Fix Windows encoding for emojis - only if not already wrapped
 if sys.platform == "win32":
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    if not isinstance(sys.stdout, io.TextIOWrapper) or sys.stdout.encoding != 'utf-8':
+        try:
+            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+            sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+        except AttributeError:
+            pass  # Already wrapped or no buffer available
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
 
+# These imports don't require torch
 from src.screener.chart_capture import get_chart_capture
-from src.agents.coordinator_local import get_coordinator_local
 from src.visual import get_report_generator
 from src.database import get_signal_repository
 from src.models import Signal, SignalType, PatternType
@@ -90,7 +94,16 @@ def _map_pattern_to_enum(pattern_name: str) -> PatternType:
 
 def check_system_requirements():
     """Check if system meets requirements for local model."""
-    import torch
+    try:
+        import torch
+    except ImportError:
+        print("\n" + "=" * 60)
+        print("❌ PyTorch not installed!")
+        print("=" * 60)
+        print("  Install with: pip install torch torchvision")
+        print("  Or for CUDA: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121")
+        print("=" * 60 + "\n")
+        return False
     
     print("\n" + "=" * 60)
     print("🔍 SYSTEM CHECK")
@@ -113,7 +126,7 @@ def check_system_requirements():
     
     print("=" * 60 + "\n")
     
-    return cuda_available
+    return True
 
 
 async def analyze_with_local_model(
@@ -122,6 +135,9 @@ async def analyze_with_local_model(
     model_name: str = "microsoft/Phi-3.5-vision-instruct",
 ):
     """Run analysis using local Phi-3.5-vision model."""
+    
+    # Import coordinator here to delay torch import
+    from src.agents.coordinator_local import get_coordinator_local
     
     logger.info("=" * 60)
     logger.info(f"🚀 Local Multi-Agent Analysis: {exchange}:{symbol}")
@@ -235,6 +251,11 @@ def main():
         action="store_true",
         help="Skip system requirements check"
     )
+    parser.add_argument(
+        "--use-gemini",
+        action="store_true",
+        help="Use Gemini API instead of local model (for testing)"
+    )
     
     args = parser.parse_args()
     
@@ -242,6 +263,15 @@ def main():
     Path("logs").mkdir(exist_ok=True)
     Path("data/charts").mkdir(parents=True, exist_ok=True)
     Path("data/reports").mkdir(parents=True, exist_ok=True)
+    
+    # If using Gemini for testing, use the original multiagent script
+    if args.use_gemini:
+        print("\n⚠️  TESTING MODE: Using Gemini API instead of local model")
+        print("   This tests the full pipeline with cloud API\n")
+        from main_multiagent import analyze_with_multiagent, load_api_key
+        load_api_key()
+        asyncio.run(analyze_with_multiagent(args.symbol, args.exchange))
+        return
     
     # Check system requirements
     if not args.skip_check:
