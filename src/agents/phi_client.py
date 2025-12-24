@@ -107,10 +107,11 @@ class PhiVisionClient:
         # Add flash attention if available and requested
         if self.flash_attention and torch.cuda.is_available():
             try:
+                import flash_attn
                 model_kwargs["_attn_implementation"] = "flash_attention_2"
                 logger.info("Using Flash Attention 2")
-            except Exception:
-                logger.warning("Flash Attention 2 not available, using default")
+            except ImportError:
+                logger.info("Flash Attention not installed, using default attention")
         
         # Load model
         self.model = AutoModelForCausalLM.from_pretrained(

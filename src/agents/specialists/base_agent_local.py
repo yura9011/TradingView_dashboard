@@ -83,12 +83,14 @@ class LocalModelManager:
                 "device_map": device_map,
             }
             
-            # Try flash attention
+            # Try flash attention only if package is installed
             if torch.cuda.is_available():
                 try:
+                    import flash_attn
                     model_kwargs["_attn_implementation"] = "flash_attention_2"
-                except Exception:
-                    pass
+                    logger.info("Using Flash Attention 2")
+                except ImportError:
+                    logger.info("Flash Attention not installed, using default attention")
             
             self._model = AutoModelForCausalLM.from_pretrained(
                 model_name,

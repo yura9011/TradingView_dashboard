@@ -675,8 +675,7 @@ document.addEventListener('DOMContentLoaded', function() {
             startBtn.disabled = true;
             stopBtn.disabled = false;
             
-            statusInterval = setInterval(updateStatus, 2000);
-            updateStatus();
+            startStatusPolling();
             
         } catch (err) {
             alert('Error starting analysis: ' + err.message);
@@ -692,6 +691,13 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error stopping:', err);
         }
     });
+    
+    // Start polling for status updates
+    function startStatusPolling() {
+        if (statusInterval) clearInterval(statusInterval);
+        statusInterval = setInterval(updateStatus, 2000);
+        updateStatus();
+    }
     
     // Update status
     async function updateStatus() {
@@ -715,16 +721,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('error-list').innerHTML = data.error_details
                     .map(e => `<li><strong>${e.symbol}:</strong> ${e.error}</li>`)
                     .join('');
+            } else {
+                document.getElementById('error-log').style.display = 'none';
             }
             
-            if (!data.running && statusInterval) {
-                clearInterval(statusInterval);
-                statusInterval = null;
+            // Update button states based on running status
+            if (data.running) {
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+            } else {
                 startBtn.disabled = false;
                 stopBtn.disabled = true;
                 
-                if (data.progress === data.total && data.total > 0) {
-                    alert(`Analysis complete!\n\n✅ ${data.completed} successful\n❌ ${data.errors} errors`);
+                // Stop polling if not running
+                if (statusInterval) {
+                    clearInterval(statusInterval);
+                    statusInterval = null;
+                }
+                
+                // Show completion message only if we just finished (not on page load)
+                if (data.progress === data.total && data.total > 0 && data.completed > 0) {
+                    // Check if this is a fresh completion (not stale state)
+                    const lastNotified = sessionStorage.getItem('bulk_notified_' + data.total);
+                    if (!lastNotified) {
+                        sessionStorage.setItem('bulk_notified_' + data.total, 'true');
+                        alert(`Analysis complete!\n\n✅ ${data.completed} successful\n❌ ${data.errors} errors`);
+                    }
                 }
             }
             
@@ -732,6 +754,29 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error fetching status:', err);
         }
     }
+    
+    // Check status on page load - restore state if analysis is running
+    async function checkInitialStatus() {
+        try {
+            const response = await fetch('/api/bulk/status');
+            const data = await response.json();
+            
+            if (data.running) {
+                // Analysis is already running, update UI and start polling
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                startStatusPolling();
+            } else if (data.total > 0 && data.progress > 0) {
+                // Show last run's progress (but don't poll)
+                updateStatus();
+            }
+        } catch (err) {
+            console.error('Error checking initial status:', err);
+        }
+    }
+    
+    // Check status immediately on page load
+    checkInitialStatus();
 });
 </script>
 {% endblock %}
