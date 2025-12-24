@@ -1,0 +1,42 @@
+# AI Trading Analysis Agent Configuration
+# Copy this file to config.yaml and fill in your values
+
+# API Keys
+gemini:
+  api_key: "YOUR_GEMINI_API_KEY"
+  model: "gemini-flash-latest"
+
+telegram:
+  bot_token: "YOUR_TELEGRAM_BOT_TOKEN"
+  chat_id: "YOUR_CHAT_ID"
+
+# Screener Settings
+screener:
+  market: "america"  # america, crypto, forex
+  timeframe: "1d"    # 1m, 5m, 15m, 1h, 4h, 1d, 1w
+  filters:
+    min_volume: 1000000
+    min_price: 5.0
+    max_price: 500.0
+  limit: 10
+
+# Analysis Settings
+analysis:
+  indicators:
+    ema_periods: [21, 50, 200]
+    rsi_period: 14
+    rsi_overbought: 70
+    rsi_oversold: 30
+  patterns:
+    - bullish_engulfing
+    - double_bottom
+    - head_shoulders
+
+# Database
+database:
+  path: "./data/signals.db"
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  file: "./logs/agent.log"

@@ -1,0 +1,84 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment variables
+.env
+.env.local
+config/config.yaml
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+data/signals.db
+data/signals_backup.db
+
+# Generated files
+data/charts/
+data/reports/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+
+# Debug files
+debug_output.txt
+
+# Kiro
+.kiro/
+
+# Images (screenshots, etc)
+*.png
+!docs/assets/*.png
+
+# Research/draft files
+research*.md
+Arquitectura*.md
+Un Vistazo*.md

@@ -1,0 +1,26 @@
+# AI Trading Analysis Agent - Dependencies
+
+# Core
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+
+# TradingView Data
+tradingview-screener>=3.0.0
+
+# AI/ML (M2)
+# google-generativeai>=0.3.0
+
+# Image Processing (M3)
+# pillow>=10.0.0
+
+# Notifications (M3)
+# python-telegram-bot>=20.0
+
+# Web Server (Optional)
+# flask>=3.0.0
+# gunicorn>=21.0.0
+
+# Development
+# pytest>=7.0.0
+# black>=23.0.0
+# ruff>=0.1.0
