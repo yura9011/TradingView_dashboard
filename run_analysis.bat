@@ -1,11 +1,14 @@
 @echo off
 chcp 65001 >nul
-setlocal
+
+:: Get the directory where this bat file is located
+cd /d "%~dp0"
 
 :: Activate virtual environment
-call venv\Scripts\activate.bat 2>nul
-if errorlevel 1 (
-    echo ERROR: Entorno virtual no encontrado. Ejecuta install_local.bat primero.
+if exist "%~dp0venv\Scripts\activate.bat" (
+    call "%~dp0venv\Scripts\activate.bat"
+) else (
+    echo ERROR: Virtual environment not found. Run install_local.bat first.
     pause
     exit /b 1
 )
@@ -16,11 +19,11 @@ if "%SYMBOL%"=="" set SYMBOL=MELI
 
 echo.
 echo ============================================================
-echo    Analizando: %SYMBOL%
+echo    Analyzing: %SYMBOL%
 echo ============================================================
 echo.
 
-python main_multiagent_local.py --symbol %SYMBOL%
+python "%~dp0main_multiagent_local.py" --symbol %SYMBOL%
 
 echo.
 pause

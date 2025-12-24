@@ -1,6 +1,8 @@
 @echo off
 chcp 65001 >nul
-setlocal
+
+:: Get the directory where this bat file is located
+cd /d "%~dp0"
 
 echo ============================================
 echo    Trading Analysis Dashboard
@@ -8,8 +10,8 @@ echo ============================================
 echo.
 
 :: Activate virtual environment
-if exist venv\Scripts\activate.bat (
-    call venv\Scripts\activate.bat
+if exist "%~dp0venv\Scripts\activate.bat" (
+    call "%~dp0venv\Scripts\activate.bat"
 ) else (
     echo ERROR: Virtual environment not found.
     echo Run install_local.bat first.
@@ -21,13 +23,13 @@ if exist venv\Scripts\activate.bat (
 python -c "import flask" 2>nul
 if errorlevel 1 (
     echo Installing Flask...
-    pip install flask pandas openpyxl --quiet
+    pip install flask pandas openpyxl
 )
 
 echo Starting dashboard at http://localhost:8080
 echo Press Ctrl+C to stop
 echo.
 
-python dashboard/app.py
+python "%~dp0dashboard\app.py"
 
 pause
