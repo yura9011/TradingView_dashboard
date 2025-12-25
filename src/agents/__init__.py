@@ -1,6 +1,6 @@
 """Agents package for AI Trading Analysis Agent.
 
-This package provides both cloud (Gemini) and local (Phi-3.5-vision) agents.
+This package provides both cloud (Gemini) and local (Qwen2-VL) agents.
 Imports are lazy to avoid requiring google-generativeai when using local models.
 """
 

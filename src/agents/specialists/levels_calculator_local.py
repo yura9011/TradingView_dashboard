@@ -1,5 +1,5 @@
 """
-Levels Calculator Agent (Local) - Uses Phi-3.5-vision-instruct.
+Levels Calculator Agent (Local) - Uses Qwen2-VL-7B-Instruct.
 """
 
 import re
@@ -17,7 +17,7 @@ class LevelsCalculatorAgentLocal(BaseAgentLocal):
     def __init__(self, model_name: str = None):
         super().__init__(
             prompt_file="levels_calculator.yaml",
-            model_name=model_name or "microsoft/Phi-3.5-vision-instruct",
+            model_name=model_name or "Qwen/Qwen2-VL-7B-Instruct",
         )
     
     def _parse_response(self, raw_text: str) -> Dict[str, Any]:

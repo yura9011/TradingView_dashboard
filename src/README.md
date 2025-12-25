@@ -9,7 +9,7 @@ src/
 │   ├── coordinator.py   # Orquestador (Gemini API)
 │   ├── coordinator_local.py  # Orquestador (Modelo Local)
 │   ├── gemini_client.py # Cliente Gemini API
-│   └── phi_client.py    # Cliente Phi-3.5 Local
+│   └── phi_client.py    # Cliente Local (legacy)
 ├── database/            # Persistencia SQLite
 ├── models/              # Schemas Pydantic
 ├── screener/            # Captura de charts TradingView
@@ -32,7 +32,7 @@ El sistema usa 3 agentes especializados coordinados:
 ### Versiones
 
 - **Gemini API** (`*_agent.py`): Usa Google Gemini Flash
-- **Local** (`*_local.py`): Usa Phi-3.5-vision-instruct
+- **Local** (`*_local.py`): Usa Qwen2-VL-7B-Instruct
 
 ### Coordinadores
 
@@ -56,7 +56,7 @@ Singleton thread-safe que comparte el modelo entre agentes:
 from src.agents.specialists.base_agent_local import LocalModelManager
 
 manager = LocalModelManager.get_instance()
-model, processor = manager.load_model("microsoft/Phi-3.5-vision-instruct")
+model, processor = manager.load_model("Qwen/Qwen2-VL-7B-Instruct")
 ```
 
 ## 💾 Database (`database/`)

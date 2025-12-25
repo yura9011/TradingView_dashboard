@@ -1,6 +1,6 @@
 # 🤖 Trading Analysis - Modelo Local
 
-Sistema de análisis técnico con IA usando **Phi-3.5-vision** de Microsoft. No requiere API externa.
+Sistema de análisis técnico con IA usando **Qwen2-VL-7B-Instruct** de Alibaba. No requiere API externa.
 
 ## ⚡ Instalación Rápida
 

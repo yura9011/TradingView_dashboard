@@ -3,7 +3,7 @@
 
 name: trend_analyst
 version: "2.1"
-model: local-phi-3.5-vision
+model: local-qwen2-vl
 
 system_prompt: |
   <role>

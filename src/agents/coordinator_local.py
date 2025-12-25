@@ -1,5 +1,5 @@
 """
-Coordinator Agent (Local) - Orchestrates specialist agents using Phi-3.5-vision.
+Coordinator Agent (Local) - Orchestrates specialist agents using Qwen2-VL.
 """
 
 import os
@@ -47,15 +47,15 @@ class CoordinatedAnalysis:
 
 
 class CoordinatorAgentLocal:
-    """Orchestrates specialist agents using local Phi-3.5-vision model."""
+    """Orchestrates specialist agents using local Qwen2-VL model."""
     
     def __init__(self, model_name: str = None):
         """Initialize coordinator with all specialist agents.
         
         Args:
-            model_name: HuggingFace model name (default: microsoft/Phi-3.5-vision-instruct)
+            model_name: HuggingFace model name (default: Qwen/Qwen2-VL-7B-Instruct)
         """
-        self.model_name = model_name or "microsoft/Phi-3.5-vision-instruct"
+        self.model_name = model_name or "Qwen/Qwen2-VL-7B-Instruct"
         
         logger.info("Initializing local specialist agents...")
         logger.info(f"Model: {self.model_name}")

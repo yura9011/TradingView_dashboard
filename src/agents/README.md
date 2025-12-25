@@ -9,7 +9,7 @@ agents/
 ├── coordinator.py          # Orquestador Gemini API
 ├── coordinator_local.py    # Orquestador Modelo Local
 ├── gemini_client.py        # Cliente Google Gemini
-├── phi_client.py           # Cliente Phi-3.5-vision
+├── phi_client.py           # Cliente Local (legacy)
 ├── chart_analyzer.py       # Analizador legacy (deprecated)
 └── specialists/
     ├── base_agent.py           # Clase base Gemini
@@ -79,12 +79,12 @@ print(analysis.summary)          # Resumen completo
 print(analysis.detailed_reasoning)  # JSON con todo el razonamiento
 ```
 
-### CoordinatorAgentLocal (Phi-3.5)
+### CoordinatorAgentLocal (Qwen2-VL)
 
 ```python
 from src.agents.coordinator_local import get_coordinator_local
 
-coordinator = get_coordinator_local(model_name="microsoft/Phi-3.5-vision-instruct")
+coordinator = get_coordinator_local(model_name="Qwen/Qwen2-VL-7B-Instruct")
 analysis = coordinator.analyze("path/to/chart.png", "AAPL")
 ```
 

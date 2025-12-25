@@ -1,6 +1,6 @@
-# 📊 Tutorial: Trading Analysis con Modelo Local Phi-3.5
+# 📊 Tutorial: Trading Analysis con Modelo Local Qwen2-VL
 
-Este tutorial te guiará paso a paso para configurar y ejecutar el sistema de análisis de trading usando el modelo local **Phi-3.5-vision-instruct** de Microsoft, sin necesidad de APIs externas.
+Este tutorial te guiará paso a paso para configurar y ejecutar el sistema de análisis de trading usando el modelo local **Qwen2-VL-7B-Instruct** de Alibaba, sin necesidad de APIs externas.
 
 ---
 
@@ -158,7 +158,7 @@ Abre `config/config.yaml` y ajusta según necesites:
 ```yaml
 # Configuración del modelo local
 local_model:
-  name: "microsoft/Phi-3.5-vision-instruct"
+  name: "Qwen/Qwen2-VL-7B-Instruct"
   device: "auto"  # auto, cuda, cpu
   
 # Configuración de captura de gráficos
@@ -195,7 +195,7 @@ python main_multiagent_local.py --symbol AAPL
 python main_multiagent_local.py --symbol MELI --exchange NASDAQ
 
 # Usar modelo específico
-python main_multiagent_local.py --symbol TSLA --model microsoft/Phi-3.5-vision-instruct
+python main_multiagent_local.py --symbol TSLA --model Qwen/Qwen2-VL-7B-Instruct
 
 # Saltar verificación del sistema
 python main_multiagent_local.py --symbol GOOGL --skip-check
@@ -214,14 +214,14 @@ python main_multiagent_local.py --symbol GOOGL --skip-check
 ============================================================
 
 🚀 Local Multi-Agent Analysis: NASDAQ:MELI
-📦 Model: microsoft/Phi-3.5-vision-instruct
+📦 Model: Qwen/Qwen2-VL-7B-Instruct
 ============================================================
 📸 Capturing chart (weekly timeframe)...
    Chart saved: data/charts/MELI_20241224_123456.png
 
 🤖 Running Local Multi-Agent Analysis...
    (First run will download the model ~8GB)
-Loading local model: microsoft/Phi-3.5-vision-instruct
+Loading local model: Qwen/Qwen2-VL-7B-Instruct
 Using CUDA: NVIDIA GeForce RTX 3080
 Model loaded successfully
 
@@ -349,9 +349,9 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 2. Asegúrate de tener 20GB+ libres
 3. Intenta descargar manualmente:
    ```python
-   from transformers import AutoModelForCausalLM, AutoProcessor
-   AutoProcessor.from_pretrained("microsoft/Phi-3.5-vision-instruct", trust_remote_code=True)
-   AutoModelForCausalLM.from_pretrained("microsoft/Phi-3.5-vision-instruct", trust_remote_code=True)
+   from transformers import Qwen2VLForConditionalGeneration, AutoProcessor
+   AutoProcessor.from_pretrained("Qwen/Qwen2-VL-7B-Instruct")
+   Qwen2VLForConditionalGeneration.from_pretrained("Qwen/Qwen2-VL-7B-Instruct")
    ```
 
 ### El análisis es muy lento
@@ -375,9 +375,8 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 ### ¿Puedo usar otro modelo?
 
 Sí, pero debe ser un modelo de visión. Opciones compatibles:
-- `microsoft/Phi-3.5-vision-instruct` (recomendado)
-- `llava-hf/llava-1.5-7b-hf`
-- Otros modelos VLM de HuggingFace
+- `Qwen/Qwen2-VL-7B-Instruct` (recomendado)
+- `Qwen/Qwen2.5-VL-7B-Instruct` (más nuevo)
 
 ### ¿Cuánto tarda un análisis?
 
@@ -423,4 +422,4 @@ Si tienes problemas:
 
 ## 📄 Licencia
 
-Este proyecto usa el modelo Phi-3.5-vision-instruct de Microsoft bajo la licencia MIT.
+Este proyecto usa el modelo Qwen2-VL-7B-Instruct de Alibaba bajo la licencia Apache 2.0.

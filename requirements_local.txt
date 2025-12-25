@@ -1,5 +1,5 @@
 # AI Trading Analysis Agent - Local Model Dependencies
-# For use with Phi-3.5-vision-instruct local model
+# For use with Qwen2-VL-7B-Instruct local model
 
 # ============================================
 # CORE DEPENDENCIES
@@ -33,7 +33,7 @@ pandas>=2.0.0
 openpyxl>=3.1.0
 
 # ============================================
-# LOCAL AI MODEL (Phi-3.5-vision)
+# LOCAL AI MODEL (Qwen2-VL-7B-Instruct)
 # ============================================
 # PyTorch - Install based on your system:
 # - CPU only: pip install torch torchvision
@@ -43,12 +43,14 @@ openpyxl>=3.1.0
 torch>=2.0.0
 torchvision>=0.15.0
 
-# Transformers for Phi-3.5 - IMPORTANT: Version must be <=4.48.3 due to DynamicCache compatibility
-# See: https://discuss.huggingface.co/t/cannot-solve-dynamiccache-seen-tokens-error/168439
-transformers>=4.36.0,<=4.48.3
+# Transformers - Qwen2-VL requires latest version
+transformers>=4.45.0
 
 # Accelerate for efficient model loading
 accelerate>=0.25.0
+
+# Qwen-VL utilities (optional but recommended)
+qwen-vl-utils>=0.0.2
 
 # Flash Attention 2 (optional, for faster inference on NVIDIA GPUs)
 # Requires CUDA toolkit installed

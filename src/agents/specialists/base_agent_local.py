@@ -1,5 +1,5 @@
 """
-Base Agent Class for Local Models - Uses Phi-3.5-vision-instruct.
+Base Agent Class for Local Models - Uses Qwen2-VL-7B-Instruct.
 """
 
 import os
@@ -13,7 +13,6 @@ from abc import ABC, abstractmethod
 
 import torch
 from PIL import Image
-from transformers import AutoModelForCausalLM, AutoProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +20,7 @@ logger = logging.getLogger(__name__)
 PROMPTS_DIR = Path(__file__).parent.parent.parent.parent / "prompts"
 
 # Default model
-DEFAULT_MODEL = "microsoft/Phi-3.5-vision-instruct"
+DEFAULT_MODEL = "Qwen/Qwen2-VL-7B-Instruct"
 
 
 @dataclass
@@ -59,6 +58,9 @@ class LocalModelManager:
             
             logger.info(f"Loading local model: {model_name}")
             
+            # Import Qwen2VL specific classes
+            from transformers import Qwen2VLForConditionalGeneration, AutoProcessor
+            
             # Determine device and dtype
             if torch.cuda.is_available():
                 device_map = "auto"
@@ -70,36 +72,26 @@ class LocalModelManager:
                 logger.info("Using CPU (this will be slow)")
             
             # Load processor
-            self._processor = AutoProcessor.from_pretrained(
-                model_name,
-                trust_remote_code=True,
-                num_crops=4,
-            )
+            logger.info("Loading processor...")
+            self._processor = AutoProcessor.from_pretrained(model_name)
             
-            # Load model - explicitly disable flash attention if not installed
+            # Load model
+            logger.info("Loading model weights (this may take a while)...")
             model_kwargs = {
                 "torch_dtype": torch_dtype,
-                "trust_remote_code": True,
                 "device_map": device_map,
             }
             
-            # Check if flash_attn is installed before enabling
-            use_flash = False
+            # Check if flash_attn is installed
             if torch.cuda.is_available():
                 try:
                     import flash_attn
-                    use_flash = True
-                    logger.info("Flash Attention 2 available")
+                    model_kwargs["attn_implementation"] = "flash_attention_2"
+                    logger.info("Using Flash Attention 2")
                 except ImportError:
-                    logger.info("Flash Attention not installed, using eager attention")
+                    logger.info("Flash Attention not installed, using default attention")
             
-            # Set attention implementation explicitly
-            if use_flash:
-                model_kwargs["_attn_implementation"] = "flash_attention_2"
-            else:
-                model_kwargs["_attn_implementation"] = "eager"
-            
-            self._model = AutoModelForCausalLM.from_pretrained(
+            self._model = Qwen2VLForConditionalGeneration.from_pretrained(
                 model_name,
                 **model_kwargs,
             )
@@ -124,16 +116,9 @@ class BaseAgentLocal(ABC):
         prompt_file: str,
         model_name: str = DEFAULT_MODEL,
     ):
-        """Initialize base agent.
-        
-        Args:
-            prompt_file: Name of prompt YAML file (without path)
-            model_name: HuggingFace model name
-        """
+        """Initialize base agent."""
         self.model_name = model_name
         self.system_prompt = self._load_prompt(prompt_file)
-        
-        # Get shared model manager
         self.model_manager = LocalModelManager.get_instance()
     
     def _load_prompt(self, prompt_file: str) -> str:
@@ -149,80 +134,79 @@ class BaseAgentLocal(ABC):
         return config.get("system_prompt", "")
     
     def analyze(self, image_path: str, additional_context: str = "") -> AgentResponse:
-        """Analyze chart image.
-        
-        Args:
-            image_path: Path to chart image
-            additional_context: Optional additional context
-            
-        Returns:
-            AgentResponse with parsed results
-        """
+        """Analyze chart image using Qwen2-VL model."""
         try:
-            # Validate image path
             image_file = Path(image_path)
             if not image_file.exists():
                 raise FileNotFoundError(f"Chart image not found: {image_path}")
             
-            # Load model (lazy, shared, thread-safe)
             model, processor = self.model_manager.load_model(self.model_name)
             
-            # Load image
+            logger.info(f"{self.__class__.__name__}: Loading and processing image...")
             image = Image.open(image_path).convert("RGB")
             
-            # Build prompt
+            # Log image info for debugging
+            logger.info(f"Image size: {image.size}, mode: {image.mode}")
+            
             full_prompt = f"{self.system_prompt}\n\n{additional_context}\n\nAnalyze this chart."
             
-            # Prepare messages
-            messages = [
+            # Qwen2-VL message format (without qwen_vl_utils)
+            # When using PIL Image directly, only specify type in message
+            # and pass the actual image to processor separately
+            conversation = [
                 {
                     "role": "user",
-                    "content": f"<|image_1|>\n{full_prompt}",
+                    "content": [
+                        {"type": "image"},  # Image placeholder - actual image passed to processor
+                        {"type": "text", "text": full_prompt},
+                    ],
                 }
             ]
             
-            # Apply chat template
-            prompt_text = processor.tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
+            logger.info(f"{self.__class__.__name__}: Applying chat template...")
+            
+            # Apply chat template to get the text prompt
+            text_prompt = processor.apply_chat_template(
+                conversation,
                 add_generation_prompt=True,
             )
             
-            # Process inputs
-            logger.info(f"{self.__class__.__name__}: Processing image and prompt...")
+            logger.info(f"{self.__class__.__name__}: Processing inputs...")
+            
+            # Process text and image together
             inputs = processor(
-                prompt_text,
-                [image],
+                text=[text_prompt],
+                images=[image],
+                padding=True,
                 return_tensors="pt",
-            ).to(model.device)
+            )
             
-            logger.info(f"{self.__class__.__name__}: Starting generation (this may take a while)...")
+            # Move inputs to model device
+            device = next(model.parameters()).device
+            inputs = inputs.to(device)
             
-            # Generate
-            generation_args = {
-                "max_new_tokens": 1024,
-                "temperature": 0.1,
-                "do_sample": False,
-            }
+            logger.info(f"{self.__class__.__name__}: Starting generation on {device}...")
             
             with torch.no_grad():
                 output_ids = model.generate(
                     **inputs,
-                    eos_token_id=processor.tokenizer.eos_token_id,
-                    **generation_args,
+                    max_new_tokens=1024,
                 )
             
             logger.info(f"{self.__class__.__name__}: Generation complete, decoding...")
             
-            # Decode
-            output_ids = output_ids[:, inputs["input_ids"].shape[1]:]
+            # Extract only the generated tokens (exclude input tokens)
+            generated_ids = [
+                out_ids[len(in_ids):] 
+                for in_ids, out_ids in zip(inputs.input_ids, output_ids)
+            ]
+            
             raw_text = processor.batch_decode(
-                output_ids,
+                generated_ids,
                 skip_special_tokens=True,
                 clean_up_tokenization_spaces=False,
             )[0]
             
-            # Validate response
             if not raw_text or not raw_text.strip():
                 logger.warning(f"{self.__class__.__name__} returned empty response")
                 return AgentResponse(
@@ -235,7 +219,6 @@ class BaseAgentLocal(ABC):
             logger.info(f"{self.__class__.__name__} analysis complete")
             logger.info(f"Raw response preview: {raw_text[:200]}...")
             
-            # Parse response
             parsed = self._parse_response(raw_text)
             
             return AgentResponse(
@@ -244,16 +227,8 @@ class BaseAgentLocal(ABC):
                 success=True,
             )
             
-        except FileNotFoundError as e:
-            logger.error(f"{self.__class__.__name__} failed: {e}")
-            return AgentResponse(
-                raw_text="",
-                parsed={},
-                success=False,
-                error=str(e),
-            )
         except Exception as e:
-            logger.error(f"{self.__class__.__name__} failed: {e}")
+            logger.error(f"{self.__class__.__name__} failed: {e}", exc_info=True)
             return AgentResponse(
                 raw_text="",
                 parsed={},
@@ -263,12 +238,5 @@ class BaseAgentLocal(ABC):
     
     @abstractmethod
     def _parse_response(self, raw_text: str) -> Dict[str, Any]:
-        """Parse agent-specific response format.
-        
-        Args:
-            raw_text: Raw text from model
-            
-        Returns:
-            Parsed dictionary
-        """
+        """Parse agent-specific response format."""
         pass

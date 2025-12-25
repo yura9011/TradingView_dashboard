@@ -1,9 +1,9 @@
 """
-Multi-Agent Analysis with Local Phi-3.5-Vision Model
+Multi-Agent Analysis with Local Qwen2-VL-7B-Instruct Model
 Run: python main_multiagent_local.py --symbol MELI
 
-This script uses a local Phi-3.5-vision-instruct model instead of Gemini API.
-Requires: GPU with 8GB+ VRAM (recommended) or CPU (slow)
+This script uses a local Qwen2-VL-7B-Instruct model instead of Gemini API.
+Requires: GPU with 16GB+ VRAM (recommended) or CPU (very slow)
 """
 
 import os
@@ -132,9 +132,9 @@ def check_system_requirements():
 async def analyze_with_local_model(
     symbol: str,
     exchange: str = "NASDAQ",
-    model_name: str = "microsoft/Phi-3.5-vision-instruct",
+    model_name: str = "Qwen/Qwen2-VL-7B-Instruct",
 ):
-    """Run analysis using local Phi-3.5-vision model."""
+    """Run analysis using local Qwen2-VL model."""
     
     # Import coordinator here to delay torch import
     from src.agents.coordinator_local import get_coordinator_local
@@ -207,7 +207,7 @@ async def analyze_with_local_model(
         analysis_summary=analysis.summary,
         detailed_reasoning=analysis.detailed_reasoning,
         chart_image_path=str(chart_path),
-        notes=json.dumps({"pattern_box": analysis.pattern_box, "model": "local-phi"}) if analysis.pattern_box else json.dumps({"model": "local-phi"}),
+        notes=json.dumps({"pattern_box": analysis.pattern_box, "model": "local-qwen"}) if analysis.pattern_box else json.dumps({"model": "local-qwen"}),
     )
     
     # Save to database
@@ -236,14 +236,14 @@ async def analyze_with_local_model(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Multi-Agent Trading Analysis with Local Phi-3.5-Vision Model"
+        description="Multi-Agent Trading Analysis with Local Qwen2-VL Model"
     )
     parser.add_argument("--symbol", "-s", type=str, default="MELI", help="Stock symbol")
     parser.add_argument("--exchange", "-e", type=str, default="NASDAQ", help="Exchange")
     parser.add_argument(
         "--model", "-m",
         type=str,
-        default="microsoft/Phi-3.5-vision-instruct",
+        default="Qwen/Qwen2-VL-7B-Instruct",
         help="HuggingFace model name"
     )
     parser.add_argument(

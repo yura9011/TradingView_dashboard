@@ -75,13 +75,13 @@ python -c "import torch; print('       PyTorch', torch.__version__, '- CUDA:', t
 echo.
 echo [5/6] Instalando dependencias...
 pip install --upgrade pip
-pip install "transformers>=4.36.0,<=4.48.3" --quiet
 pip install flask playwright --quiet
 pip install -r "%~dp0requirements_local.txt" --quiet
 if errorlevel 1 (
     echo       Reintentando instalacion individual...
     pip install flask pandas openpyxl pydantic python-dotenv PyYAML Pillow selenium accelerate tradingview-screener playwright
-    pip install "transformers>=4.36.0,<=4.48.3"
+    pip install "transformers>=4.45.0"
+    pip install qwen-vl-utils
 )
 echo       Instalando navegadores de Playwright...
 playwright install chromium
