@@ -11,11 +11,15 @@ import logging
 import argparse
 from pathlib import Path
 
-# Fix Windows encoding for emojis
+# Fix Windows encoding for emojis - only if not already wrapped
 if sys.platform == "win32":
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    if not isinstance(sys.stdout, io.TextIOWrapper) or sys.stdout.encoding != 'utf-8':
+        try:
+            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+            sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+        except AttributeError:
+            pass  # Already wrapped or no buffer available
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))

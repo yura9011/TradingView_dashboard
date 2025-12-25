@@ -1,0 +1,782 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk Analysis • TradingAI{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Bulk Analysis</h1>
+    <p class="subtitle">Analyze multiple stocks sequentially with AI</p>
+</div>
+
+<div class="bulk-container">
+    <!-- Input Section -->
+    <div class="card">
+        <h2>📝 Symbols to Analyze</h2>
+
+        <!-- Excel Upload -->
+        <div class="upload-area">
+            <input type="file" id="excel-file" accept=".xlsx,.xls" style="display:none;">
+            <button id="upload-btn" class="btn btn-secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                Upload Excel
+            </button>
+            <span id="file-name" class="file-name"></span>
+        </div>
+
+        <div class="divider"><span>or edit list below</span></div>
+
+        <!-- Symbols Textarea -->
+        <textarea id="symbols-input" class="symbols-textarea" placeholder="Enter symbols, one per line...">AAL
+AAP
+AAPL
+ABBV
+ABEV
+ABNB
+ABT
+ACN
+ACWI
+ADBE
+ADI
+ADP
+AEG
+AEM
+AI
+AIG
+AKO.B
+ALAB
+AMAT
+AMD
+AMGN
+AMX
+AMZN
+ANF
+ARCO
+ARM
+ASML
+ASR
+ASTS
+AVGO
+AXIA
+AXP
+AZN
+B
+BA
+BABA
+BAK
+BB
+BBD
+BHP
+BIDU
+BIIB
+BIOX
+BITF
+BKNG
+BKR
+BMY
+BP
+BRKB
+BSBR
+C
+CAAP
+CAH
+CAR
+CAT
+CCL
+CDE
+CEG
+COIN
+COST
+CRM
+CRWV
+CSCO
+CVS
+CVX
+CX
+DAL
+DD
+DE
+DECK
+DEO
+DHR
+DIA
+DIS
+DOCU
+DOW
+E
+EA
+EBAY
+ECL
+EFX
+ELP
+EMBJ
+EQNR
+ETSY
+F
+FCX
+FDX
+FSLR
+FXI
+GDX
+GE
+GFI
+GGB
+GILD
+GLOB
+GM
+GOOGL
+GPRK
+GRMN
+GS
+GSK
+GT
+HAL
+HD
+HDB
+HL
+HMC
+HMY
+HOG
+HON
+HOOD
+HPQ
+HSY
+HUT
+HWM
+IBM
+IBN
+IFF
+INFY
+INTC
+IP
+IREN
+ISRG
+ITUB
+JCI
+JD
+JMIA
+JNJ
+JOYY
+JPM
+KGC
+KMB
+KO
+LAC
+LAR
+LLY
+LMT
+LND
+LRCX
+LYG
+MA
+MCD
+MDLZ
+MDT
+MELI
+META
+MMC
+MMM
+MO
+MOS
+MRK
+MRNA
+MRVL
+MSFT
+MSI
+MSTR
+MU
+MUX
+NEM
+NFLX
+NG
+NIO
+NKE
+NOW
+NTES
+NU
+NUE
+NVDA
+NVS
+NXE
+OKLO
+ORCL
+ORLY
+OXY
+PAAS
+PAGS
+PANW
+PATH
+PBI
+PBR
+PCAR
+PDD
+PEP
+PFE
+PG
+PHG
+PINS
+PLTR
+PM
+PSX
+PYPL
+QCOM
+RACE
+RBLX
+RGTI
+RIO
+RIOT
+RKLB
+ROKU
+RTX
+SAP
+SATL
+SBS
+SBUX
+SCCO
+SDA
+SE
+SHEL
+SHOP
+SID
+SLB
+SLV
+SMH
+SNAP
+SNOW
+SONY
+SPCE
+SPGI
+SPOT
+STLA
+STNE
+SUZ
+SWKS
+SYY
+T
+TCOM
+TEAM
+TEM
+TEN
+TGT
+TIMB
+TJX
+TM
+TMO
+TMUS
+TRIP
+TSLA
+TSM
+TV
+TWLO
+TXN
+TXR
+UBER
+UGP
+UL
+UNH
+UNP
+UPST
+URA
+URBN
+USB
+V
+VALE
+VIST
+VIV
+VOD
+VRTX
+VST
+VZ
+WFC
+WMT
+XOM
+XP
+XPEV
+XRX
+XYZ
+ZM</textarea>
+
+        <!-- Symbol Count -->
+        <div class="symbol-count">
+            <span id="symbol-count">268</span> symbols loaded
+        </div>
+
+        <!-- Options -->
+        <div class="options-row">
+            <label class="checkbox-wrapper">
+                <input type="checkbox" id="use-local-model" checked>
+                <span class="checkmark"></span>
+                Use local model (Qwen2-VL) — No API required
+            </label>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button id="start-btn" class="btn btn-primary btn-large">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                Start Analysis
+            </button>
+            <button id="stop-btn" class="btn btn-danger btn-large" disabled>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="6" y="6" width="12" height="12"/>
+                </svg>
+                Stop
+            </button>
+        </div>
+    </div>
+
+    <!-- Progress Section -->
+    <div class="card">
+        <h2>📈 Progress</h2>
+
+        <!-- Progress Bar -->
+        <div class="progress-section">
+            <div class="progress-bar-large">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+            <div class="progress-stats">
+                <span id="progress-count">0 / 0</span>
+                <span id="progress-percent">0%</span>
+            </div>
+        </div>
+
+        <!-- Current Symbol -->
+        <div class="current-symbol-box">
+            <span class="label">Currently analyzing</span>
+            <span id="current-symbol" class="symbol-name">—</span>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="mini-stats">
+            <div class="mini-stat success">
+                <span id="completed-count">0</span>
+                <label>Completed</label>
+            </div>
+            <div class="mini-stat error">
+                <span id="error-count">0</span>
+                <label>Errors</label>
+            </div>
+            <div class="mini-stat pending">
+                <span id="pending-count">0</span>
+                <label>Remaining</label>
+            </div>
+        </div>
+
+        <!-- Error Log -->
+        <div id="error-log" class="error-log" style="display:none;">
+            <h3>⚠️ Recent Errors</h3>
+            <ul id="error-list"></ul>
+        </div>
+    </div>
+</div>
+
+<style>
+.bulk-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+@media (max-width: 1024px) {
+    .bulk-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.upload-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.file-name {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 24px 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-subtle);
+}
+
+.symbols-textarea {
+    width: 100%;
+    height: 300px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    resize: vertical;
+    transition: var(--transition-fast);
+}
+
+.symbols-textarea:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px var(--accent-primary-glow);
+}
+
+.symbol-count {
+    margin-top: 12px;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.symbol-count span {
+    color: var(--accent-primary);
+    font-weight: 600;
+}
+
+.options-row {
+    margin: 24px 0;
+}
+
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.checkbox-wrapper input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-primary);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.action-buttons .btn {
+    flex: 1;
+}
+
+/* Progress Section */
+.progress-section {
+    margin-bottom: 24px;
+}
+
+.progress-bar-large {
+    height: 12px;
+    background: var(--bg-elevated);
+    border-radius: 100px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--gradient-primary);
+    border-radius: 100px;
+    transition: width 0.5s ease;
+}
+
+.progress-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.current-symbol-box {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.current-symbol-box .label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+}
+
+.current-symbol-box .symbol-name {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+}
+
+.mini-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.mini-stat {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    text-align: center;
+}
+
+.mini-stat span {
+    display: block;
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.mini-stat label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.mini-stat.success span { color: var(--accent-success); }
+.mini-stat.error span { color: var(--accent-danger); }
+.mini-stat.pending span { color: var(--accent-warning); }
+
+.error-log {
+    margin-top: 24px;
+    padding: 16px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: var(--radius-md);
+}
+
+.error-log h3 {
+    font-size: 0.875rem;
+    color: var(--accent-danger);
+    margin-bottom: 12px;
+}
+
+.error-log ul {
+    list-style: none;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.error-log li {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(239, 68, 68, 0.1);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.error-log li:last-child {
+    border-bottom: none;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadBtn = document.getElementById('upload-btn');
+    const excelFile = document.getElementById('excel-file');
+    const fileName = document.getElementById('file-name');
+    const symbolsInput = document.getElementById('symbols-input');
+    const symbolCount = document.getElementById('symbol-count');
+    const startBtn = document.getElementById('start-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const useLocalModel = document.getElementById('use-local-model');
+
+    let statusInterval = null;
+
+    // Update symbol count
+    function updateSymbolCount() {
+        const symbols = symbolsInput.value.split('\n').filter(s => s.trim().length > 0);
+        symbolCount.textContent = symbols.length;
+    }
+
+    symbolsInput.addEventListener('input', updateSymbolCount);
+    updateSymbolCount();
+
+    // File upload
+    uploadBtn.addEventListener('click', () => excelFile.click());
+
+    excelFile.addEventListener('change', async function() {
+        if (!this.files[0]) return;
+
+        fileName.textContent = this.files[0].name;
+
+        const formData = new FormData();
+        formData.append('file', this.files[0]);
+
+        try {
+            const response = await fetch('/api/bulk/load-excel', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
+
+            symbolsInput.value = data.symbols.join('\n');
+            updateSymbolCount();
+        } catch (err) {
+            alert('Error loading file: ' + err.message);
+        }
+    });
+
+    // Start analysis
+    startBtn.addEventListener('click', async function() {
+        const symbols = symbolsInput.value
+            .split('\n')
+            .map(s => s.trim())
+            .filter(s => s.length > 0);
+
+        if (symbols.length === 0) {
+            alert('Please enter at least one symbol');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/bulk/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    symbols: symbols,
+                    use_local_model: useLocalModel.checked
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
+
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+
+            startStatusPolling();
+
+        } catch (err) {
+            alert('Error starting analysis: ' + err.message);
+        }
+    });
+
+    // Stop analysis
+    stopBtn.addEventListener('click', async function() {
+        try {
+            await fetch('/api/bulk/stop', { method: 'POST' });
+            stopBtn.disabled = true;
+        } catch (err) {
+            console.error('Error stopping:', err);
+        }
+    });
+
+    // Start polling for status updates
+    function startStatusPolling() {
+        if (statusInterval) clearInterval(statusInterval);
+        statusInterval = setInterval(updateStatus, 2000);
+        updateStatus();
+    }
+
+    // Update status
+    async function updateStatus() {
+        try {
+            const response = await fetch('/api/bulk/status');
+            const data = await response.json();
+
+            const percent = data.total > 0 ? (data.progress / data.total * 100) : 0;
+            document.getElementById('progress-fill').style.width = percent + '%';
+            document.getElementById('progress-count').textContent = `${data.progress} / ${data.total}`;
+            document.getElementById('progress-percent').textContent = Math.round(percent) + '%';
+
+            document.getElementById('current-symbol').textContent = data.current_symbol || '—';
+
+            document.getElementById('completed-count').textContent = data.completed;
+            document.getElementById('error-count').textContent = data.errors;
+            document.getElementById('pending-count').textContent = Math.max(0, data.total - data.progress);
+
+            if (data.error_details && data.error_details.length > 0) {
+                document.getElementById('error-log').style.display = 'block';
+                document.getElementById('error-list').innerHTML = data.error_details
+                    .map(e => `<li><strong>${e.symbol}:</strong> ${e.error}</li>`)
+                    .join('');
+            } else {
+                document.getElementById('error-log').style.display = 'none';
+            }
+
+            // Update button states based on running status
+            if (data.running) {
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+            } else {
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+
+                // Stop polling if not running
+                if (statusInterval) {
+                    clearInterval(statusInterval);
+                    statusInterval = null;
+                }
+
+                // Show completion message only if we just finished (not on page load)
+                if (data.progress === data.total && data.total > 0 && data.completed > 0) {
+                    // Check if this is a fresh completion (not stale state)
+                    const lastNotified = sessionStorage.getItem('bulk_notified_' + data.total);
+                    if (!lastNotified) {
+                        sessionStorage.setItem('bulk_notified_' + data.total, 'true');
+                        alert(`Analysis complete!\n\n✅ ${data.completed} successful\n❌ ${data.errors} errors`);
+                    }
+                }
+            }
+
+        } catch (err) {
+            console.error('Error fetching status:', err);
+        }
+    }
+
+    // Check status on page load - restore state if analysis is running
+    async function checkInitialStatus() {
+        try {
+            const response = await fetch('/api/bulk/status');
+            const data = await response.json();
+
+            if (data.running) {
+                // Analysis is already running, update UI and start polling
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                startStatusPolling();
+            } else if (data.total > 0 && data.progress > 0) {
+                // Show last run's progress (but don't poll)
+                updateStatus();
+            }
+        } catch (err) {
+            console.error('Error checking initial status:', err);
+        }
+    }
+
+    // Check status immediately on page load
+    checkInitialStatus();
+});
+</script>
+{% endblock %}
