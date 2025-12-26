@@ -56,7 +56,7 @@ class ScreenerClient:
         try:
             query = (
                 Query()
-                .select("name", "close", "change", "volume", "market_cap_basic", "sector")
+                .select("name", "close", "change", "volume", "market_cap_basic", "sector", "ATR")
                 .where(
                     Column("close") >= min_price,
                     Column("close") <= max_price,
@@ -85,6 +85,43 @@ class ScreenerClient:
         except Exception as e:
             logger.error(f"Screener query failed: {e}")
             return ScreenerResult(market=self.market)
+
+    def get_symbol_data(self, symbol: str) -> Optional[dict]:
+        """Get data for a specific symbol.
+        
+        Args:
+            symbol: Ticker symbol (e.g., 'AAPL', 'BTCUSD')
+            
+        Returns:
+            Dictionary with symbol data or None if not found
+        """
+        try:
+            # Clean symbol (remove exchange if present)
+            clean_symbol = symbol.split(':')[-1] if ':' in symbol else symbol
+            
+            query = (
+                Query()
+                .select(
+                    "name", "close", "change", "volume", 
+                    "ATR", "RSI", "MACD.macd", "MACD.signal",
+                    "average_volume_10d_calc", "sector"
+                )
+                .where(Column("name") == clean_symbol)
+                .limit(1)
+            )
+            
+            _, df = query.get_scanner_data()
+            
+            if df is None or df.empty:
+                return None
+                
+            # Convert first row to dict
+            data = df.iloc[0].to_dict()
+            return data
+            
+        except Exception as e:
+            logger.error(f"Failed to fetch data for {symbol}: {e}")
+            return None
     
     def get_gappers(
         self,

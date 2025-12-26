@@ -198,6 +198,18 @@ async def analyze_with_local_model(
     print(f"    Fibonacci: {analysis.fibonacci or 'N/A'}")
     print(f"    Key Level: ${analysis.key_level or 0:,.2f}")
     print("-" * 60)
+    print("  RISK (Dave):")
+    print(f"    Assessment: {analysis.risk_assessment}")
+    print(f"    Stop Loss: {analysis.stop_loss}")
+    print(f"    Position Size: {analysis.position_size}")
+    print("-" * 60)
+    print("  SENTIMENT (Emily):")
+    print(f"    Score: {analysis.sentiment_score:.2f}")
+    print(f"    Label: {analysis.sentiment_label}")
+    if analysis.veto_reason:
+        print("-" * 60)
+        print(f"  ⚠️ VETO: {analysis.veto_reason}")
+    print("-" * 60)
     print("  SUMMARY:")
     print(f"  {analysis.summary}")
     print("=" * 60)
@@ -256,8 +268,8 @@ def main():
     parser.add_argument(
         "--model", "-m",
         type=str,
-        default="Qwen/Qwen2-VL-7B-Instruct",
-        help="HuggingFace model name"
+        default="Qwen/Qwen2-VL-2B-Instruct",
+        help="HuggingFace model name (default: 2B for 8GB VRAM)"
     )
     parser.add_argument(
         "--skip-check",

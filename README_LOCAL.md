@@ -1,59 +1,104 @@
-# 🤖 Trading Analysis - Modelo Local
+# QuantAgents Local - Multi-Agent Trading Analysis
 
-Sistema de análisis técnico con IA usando **Qwen2-VL-7B-Instruct** de Alibaba. No requiere API externa.
+Sistema de análisis técnico multi-agente usando modelos de visión local (Qwen2-VL).
 
-## ⚡ Instalación Rápida
+## Requisitos
+
+### Hardware
+- **GPU recomendada:** RTX 3070 o superior (8GB+ VRAM)
+- **Modelo:** Qwen2-VL-2B-Instruct (~4GB VRAM)
+
+### Software
+```bash
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+pip install transformers accelerate pillow
+pip install tradingview-screener
+pip install selenium webdriver-manager
+```
+
+## Uso Rápido
+
+### Análisis con modelo local (GPU)
+```bash
+python main_multiagent_local.py --symbol AAPL
+```
+
+### Análisis con Gemini API (cloud)
+```bash
+python main_multiagent.py --symbol AAPL
+```
+
+## Arquitectura
+
+```
+┌──────────────────────────────────────────────────────┐
+│                  Coordinator (Otto)                   │
+│                  Final Synthesis                      │
+└───────────────────────┬──────────────────────────────┘
+                        │
+    ┌───────────────────┼───────────────────┐
+    │                   │                   │
+    ▼                   ▼                   ▼
+┌─────────┐      ┌─────────┐      ┌─────────┐
+│ Pattern │      │  Trend  │      │ Levels  │
+│ Detector│      │ Analyst │      │ Calc    │
+│ (Bob)   │      │         │      │         │
+└─────────┘      └─────────┘      └─────────┘
+    │                   │                   │
+    └───────────────────┼───────────────────┘
+                        │
+    ┌───────────────────┼───────────────────┐
+    │                   │                   │
+    ▼                   ▼                   ▼
+┌─────────┐      ┌─────────┐      ┌─────────┐
+│  Risk   │      │Sentiment│      │  VETO   │
+│ Manager │      │ Analyst │      │ System  │
+│ (Dave)  │      │ (Emily) │      │         │
+└─────────┘      └─────────┘      └─────────┘
+```
+
+## Sistema de Veto
+
+El sistema incluye 3 niveles de veto para proteger el capital:
+
+1. **RISK VETO (Dave):** Si ATR% > 5% → DANGEROUS → Veto automático
+2. **SENTIMENT VETO (Emily):** Si sentiment < -0.5 + setup bullish → Veto
+3. **FAKEOUT VETO:** Si breakout + RVOL < 1.5 → Veto por bajo volumen
+
+## Tests
 
 ```bash
-git clone https://github.com/yura9011/TradingView_dashboard.git
-cd TradingView_dashboard
-git checkout feature/local-phi-model
+# Test de integración (sin modelo)
+python test_integration_flow.py
+
+# Test completo E2E (requiere GPU o usa moondream2 en CPU)
+python test_full_flow_e2e.py --symbol TSLA
 ```
 
-Luego doble click en **`install_local.bat`**
-
-## 🚀 Uso
-
-### Analizar un símbolo
-```bash
-run_analysis.bat AAPL
-```
-
-### Abrir el Dashboard
-```bash
-run_dashboard.bat
-```
-Luego abrir http://localhost:8080
-
-### Análisis masivo (268 símbolos)
-1. Abrir dashboard
-2. Click en "Bulk Analysis"
-3. Click en "Start Analysis"
-
-## 💻 Requisitos
-
-- Windows 10/11
-- Python 3.10 o 3.11
-- GPU NVIDIA con 8GB+ VRAM (recomendado)
-- 20GB espacio en disco
-
-## 📁 Estructura
+## Estructura de Archivos
 
 ```
-data/
-  charts/     → Capturas de gráficos
-  reports/    → Reportes generados
-  signals.db  → Base de datos
+src/agents/
+├── coordinator_local.py      # Orquestador principal
+├── specialists/
+│   ├── pattern_detector*.py  # Detección de patrones
+│   ├── trend_analyst*.py     # Análisis de tendencia
+│   ├── levels_calculator*.py # Cálculo de niveles
+│   ├── risk_manager_local.py # Dave (rule-based)
+│   └── news_analyst_local.py # Emily (rule-based)
 ```
 
-## ❓ Problemas comunes
+## Output
 
-**"CUDA out of memory"** → Cerrar otras apps que usen la GPU
+Cada análisis genera:
+- Signal en DB (`data/signals.db`)
+- Chart capturado (`data/charts/`)
+- Report markdown (`data/reports/`)
 
-**"Model download failed"** → Verificar conexión a internet y espacio en disco
+## Tiempos de Ejecución
 
-**Análisis muy lento** → Sin GPU el análisis tarda ~20 min por símbolo
-
----
-
-📖 Ver [TUTORIAL.md](TUTORIAL.md) para documentación completa.
+| Hardware | Tiempo por análisis |
+|----------|---------------------|
+| RTX 3070 | ~30-60 segundos |
+| RTX 4090 | ~15-20 segundos |
+| CPU only | ~10-15 minutos |

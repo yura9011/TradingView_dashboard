@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 # Default prompts directory
 PROMPTS_DIR = Path(__file__).parent.parent.parent.parent / "prompts"
 
-# Default model
-DEFAULT_MODEL = "Qwen/Qwen2-VL-7B-Instruct"
+# Default model (2B for RTX 3070 / 8GB VRAM compatibility)
+DEFAULT_MODEL = "Qwen/Qwen2-VL-2B-Instruct"
 
 
 @dataclass
