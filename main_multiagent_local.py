@@ -156,13 +156,16 @@ async def analyze_with_local_model(
     )
     logger.info(f"   Chart saved: {chart_path}")
     
-    # Build price context from OCR if available
+    # Build price context from OCR if available and valid
     price_context = ""
-    if price_range and price_range.get("min_price"):
-        price_context = f"Price range visible on chart: {price_range['price_range_text']}. "
+    if price_range and price_range.get("ocr_success"):
+        price_context = f"IMPORTANT - Price range visible on chart Y-axis: {price_range['price_range_text']}. "
         if price_range.get("current_price"):
             price_context += f"Approximate current price: ${price_range['current_price']:.2f}. "
-        logger.info(f"   OCR Price Range: {price_range['price_range_text']}")
+        price_context += "Use these values as reference for support/resistance levels."
+        logger.info(f"   ✅ OCR Price Range: {price_range['price_range_text']}")
+    else:
+        logger.info("   ⚠️  OCR not available - model will estimate prices from chart visuals")
     
     # Step 2: Multi-agent analysis with local model
     logger.info("\n🤖 Running Local Multi-Agent Analysis...")

@@ -89,13 +89,20 @@ echo       Dependencias instaladas
 
 :: Check for Tesseract OCR
 echo.
-echo [5.5/6] Verificando Tesseract OCR...
+echo [5.5/6] Verificando Tesseract OCR (para lectura de precios)...
 tesseract --version >nul 2>&1
 if errorlevel 1 (
-    echo       ⚠️  Tesseract OCR no encontrado
-    echo       Para mejor precision en precios, instalar desde:
-    echo       https://github.com/UB-Mannheim/tesseract/wiki
-    echo       O con winget: winget install UB-Mannheim.TesseractOCR
+    echo       Tesseract OCR no encontrado, intentando instalar...
+    winget install UB-Mannheim.TesseractOCR --silent >nul 2>&1
+    if errorlevel 1 (
+        echo       ⚠️  No se pudo instalar automaticamente
+        echo       Para mejor precision en precios, instalar manualmente desde:
+        echo       https://github.com/UB-Mannheim/tesseract/wiki
+        echo       Despues de instalar, reiniciar la terminal.
+    ) else (
+        echo       ✅ Tesseract OCR instalado
+        echo       NOTA: Puede ser necesario reiniciar la terminal
+    )
 ) else (
     echo       ✅ Tesseract OCR encontrado
 )
@@ -123,6 +130,11 @@ echo.
 echo Para abrir el dashboard:
 echo    run_dashboard.bat
 echo.
-echo NOTA: La primera ejecucion descargara el modelo (~8GB)
+echo MODELOS DISPONIBLES:
+echo    - 2B: Rapido (~2-3 min/simbolo) - Recomendado para bulk
+echo    - 7B: Mejor calidad (~10-12 min/simbolo)
+echo.
+echo NOTA: La primera ejecucion descargara el modelo
+echo       2B = ~4GB, 7B = ~15GB
 echo.
 pause

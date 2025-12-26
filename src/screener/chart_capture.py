@@ -61,21 +61,37 @@ class ChartCapture:
             "max_price": None,
             "current_price": None,
             "price_range_text": None,
+            "ocr_success": False,
         }
         
         try:
             # Try to import pytesseract for OCR
             import pytesseract
             
+            # Check if Tesseract is actually installed
+            try:
+                pytesseract.get_tesseract_version()
+            except pytesseract.TesseractNotFoundError:
+                logger.warning("=" * 50)
+                logger.warning("⚠️  Tesseract OCR not installed!")
+                logger.warning("   Install from: https://github.com/UB-Mannheim/tesseract/wiki")
+                logger.warning("   Or run: winget install UB-Mannheim.TesseractOCR")
+                logger.warning("   OCR disabled - model will estimate prices from chart")
+                logger.warning("=" * 50)
+                return result
+            
             img = Image.open(image_path)
             width, height = img.size
             
-            # Crop right side of image (Y-axis area) - last 10% of width
-            right_margin = int(width * 0.90)
+            # Crop right side of image (Y-axis area) - last 8% of width
+            right_margin = int(width * 0.92)
             y_axis_region = img.crop((right_margin, 0, width, height))
             
-            # Run OCR on the Y-axis region
-            ocr_text = pytesseract.image_to_string(y_axis_region)
+            # Run OCR on the Y-axis region with config for numbers
+            ocr_config = '--psm 6 -c tessedit_char_whitelist=0123456789.,'
+            ocr_text = pytesseract.image_to_string(y_axis_region, config=ocr_config)
+            
+            logger.debug(f"OCR raw text: {ocr_text}")
             
             # Extract numbers that look like prices
             # Match patterns like: 150.00, 12.50, 1,234.56, etc.
@@ -87,8 +103,8 @@ class ChartCapture:
             for match in matches:
                 try:
                     # Remove commas and convert
-                    clean = match.replace(',', '')
-                    if clean and clean != '.':
+                    clean = match.replace(',', '').strip()
+                    if clean and clean != '.' and len(clean) > 0:
                         price = float(clean)
                         # Filter out unreasonable values (likely noise)
                         if 0.01 < price < 100000:
@@ -96,23 +112,32 @@ class ChartCapture:
                 except ValueError:
                     continue
             
-            if prices:
-                result["min_price"] = min(prices)
-                result["max_price"] = max(prices)
-                # Current price is often near the middle-right of chart
-                # Use median as approximation
-                prices_sorted = sorted(prices)
-                mid_idx = len(prices_sorted) // 2
-                result["current_price"] = prices_sorted[mid_idx]
-                result["price_range_text"] = f"${result['min_price']:.2f} - ${result['max_price']:.2f}"
+            if len(prices) >= 2:
+                # Validate: min should be significantly less than max
+                min_p = min(prices)
+                max_p = max(prices)
                 
-                logger.info(f"OCR extracted price range: {result['price_range_text']}")
+                # Sanity check: max should be at least 5% more than min
+                if max_p > min_p * 1.05:
+                    result["min_price"] = min_p
+                    result["max_price"] = max_p
+                    
+                    # Current price is often the most frequent or near middle
+                    prices_sorted = sorted(prices)
+                    mid_idx = len(prices_sorted) // 2
+                    result["current_price"] = prices_sorted[mid_idx]
+                    result["price_range_text"] = f"${min_p:.2f} - ${max_p:.2f}"
+                    result["ocr_success"] = True
+                    
+                    logger.info(f"✅ OCR extracted price range: {result['price_range_text']}")
+                else:
+                    logger.warning(f"OCR prices too close together: {min_p} - {max_p}, ignoring")
             else:
-                logger.warning("OCR could not extract prices from chart")
+                logger.warning(f"OCR found insufficient prices: {prices}")
                 
         except ImportError:
-            logger.warning("pytesseract not installed - OCR disabled. Install with: pip install pytesseract")
-            logger.warning("Also install Tesseract OCR: https://github.com/tesseract-ocr/tesseract")
+            logger.warning("pytesseract not installed - OCR disabled")
+            logger.warning("Install with: pip install pytesseract")
         except Exception as e:
             logger.warning(f"OCR extraction failed: {e}")
         
@@ -170,11 +195,11 @@ class ChartCapture:
                 logger.info("Waiting for chart to load...")
                 await page.wait_for_timeout(5000)
                 
-                # Try to set the date range to show last N months
-                # TradingView keyboard shortcut: Alt+G opens "Go to" dialog
-                # Or we can use the range selector
+                # Try multiple methods to set the date range
+                range_set = False
+                
+                # Method 1: Try clicking on date range selector
                 try:
-                    # Try clicking on date range selector and set to 3M
                     range_selector = await page.query_selector('[data-name="date-ranges-menu"]')
                     if range_selector:
                         await range_selector.click()
@@ -184,9 +209,24 @@ class ChartCapture:
                         if range_option:
                             await range_option.click()
                             await page.wait_for_timeout(2000)
-                            logger.info(f"Set range to {range_months}M")
+                            logger.info(f"Set range to {range_months}M via menu")
+                            range_set = True
                 except Exception as e:
-                    logger.debug(f"Could not set date range via UI: {e}")
+                    logger.debug(f"Method 1 (menu) failed: {e}")
+                
+                # Method 2: Try keyboard shortcut if menu didn't work
+                if not range_set:
+                    try:
+                        # Press Alt+R to open range dialog in some TradingView versions
+                        await page.keyboard.press("Alt+r")
+                        await page.wait_for_timeout(500)
+                        # Type the range
+                        await page.keyboard.type(f"{range_months}M")
+                        await page.keyboard.press("Enter")
+                        await page.wait_for_timeout(1000)
+                        logger.info(f"Attempted to set range via keyboard")
+                    except Exception as e:
+                        logger.debug(f"Method 2 (keyboard) failed: {e}")
                 
                 # Wait for chart data to fully render
                 await page.wait_for_timeout(3000)
