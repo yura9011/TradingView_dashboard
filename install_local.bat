@@ -79,13 +79,26 @@ pip install flask playwright --quiet
 pip install -r "%~dp0requirements_local.txt" --quiet
 if errorlevel 1 (
     echo       Reintentando instalacion individual...
-    pip install flask pandas openpyxl pydantic python-dotenv PyYAML Pillow selenium accelerate tradingview-screener playwright
+    pip install flask pandas openpyxl pydantic python-dotenv PyYAML Pillow selenium accelerate tradingview-screener playwright pytesseract
     pip install "transformers>=4.45.0"
     pip install qwen-vl-utils
 )
 echo       Instalando navegadores de Playwright...
 playwright install chromium
 echo       Dependencias instaladas
+
+:: Check for Tesseract OCR
+echo.
+echo [5.5/6] Verificando Tesseract OCR...
+tesseract --version >nul 2>&1
+if errorlevel 1 (
+    echo       ⚠️  Tesseract OCR no encontrado
+    echo       Para mejor precision en precios, instalar desde:
+    echo       https://github.com/UB-Mannheim/tesseract/wiki
+    echo       O con winget: winget install UB-Mannheim.TesseractOCR
+) else (
+    echo       ✅ Tesseract OCR encontrado
+)
 
 :: Create directories and config
 echo.

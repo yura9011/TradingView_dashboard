@@ -144,22 +144,32 @@ async def analyze_with_local_model(
     logger.info(f"📦 Model: {model_name}")
     logger.info("=" * 60)
     
-    # Step 1: Capture chart
-    logger.info("📸 Capturing chart (weekly timeframe)...")
+    # Step 1: Capture chart (daily, 3 months)
+    logger.info("📸 Capturing chart (daily, 3 months)...")
     chart_capture = get_chart_capture()
-    chart_path = await asyncio.to_thread(
+    chart_path, price_range = await asyncio.to_thread(
         chart_capture.capture_sync,
         symbol=symbol,
         exchange=exchange,
+        interval="D",
+        range_months=3,
     )
     logger.info(f"   Chart saved: {chart_path}")
     
+    # Build price context from OCR if available
+    price_context = ""
+    if price_range and price_range.get("min_price"):
+        price_context = f"Price range visible on chart: {price_range['price_range_text']}. "
+        if price_range.get("current_price"):
+            price_context += f"Approximate current price: ${price_range['current_price']:.2f}. "
+        logger.info(f"   OCR Price Range: {price_range['price_range_text']}")
+    
     # Step 2: Multi-agent analysis with local model
     logger.info("\n🤖 Running Local Multi-Agent Analysis...")
-    logger.info("   (First run will download the model ~8GB)")
+    logger.info("   (First run will download the model)")
     
     coordinator = get_coordinator_local(model_name=model_name)
-    analysis = coordinator.analyze(str(chart_path), symbol)
+    analysis = coordinator.analyze(str(chart_path), symbol, additional_context=price_context)
     
     print("\n" + "=" * 60)
     print("📊 ANALYSIS RESULTS (Local Model)")

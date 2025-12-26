@@ -20,6 +20,9 @@ Pillow>=10.0.0
 selenium>=4.15.0
 playwright>=1.40.0
 
+# OCR for extracting price levels from charts
+pytesseract>=0.3.10
+
 # ============================================
 # DATABASE
 # ============================================

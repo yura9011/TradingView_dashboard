@@ -135,19 +135,26 @@ class CoordinatorAgentLocal:
         
         return " ".join(parts)
     
-    def analyze(self, image_path: str, symbol: str = "") -> CoordinatedAnalysis:
+    def analyze(self, image_path: str, symbol: str = "", additional_context: str = "") -> CoordinatedAnalysis:
         """Run full multi-agent analysis pipeline.
         
         Args:
             image_path: Path to chart image
             symbol: Optional symbol for context
+            additional_context: Additional context like price range from OCR
             
         Returns:
             CoordinatedAnalysis with all findings
         """
         logger.info(f"Starting local coordinated analysis for {symbol or 'chart'}")
         
-        context = f"Symbol: {symbol}" if symbol else ""
+        # Build context with symbol and any additional info (like OCR price range)
+        context_parts = []
+        if symbol:
+            context_parts.append(f"Symbol: {symbol}")
+        if additional_context:
+            context_parts.append(additional_context)
+        context = " | ".join(context_parts)
         
         # Step 1: Pattern Detection
         logger.info("🔍 Step 1/3: Pattern Detection (local)...")
