@@ -313,6 +313,29 @@ ZM</textarea>
             </label>
         </div>
         
+        <!-- Model Size Selection (only visible when local model is selected) -->
+        <div id="model-size-options" class="model-size-options">
+            <label class="option-label">Model Size:</label>
+            <div class="radio-group">
+                <label class="radio-wrapper">
+                    <input type="radio" name="model-size" value="2B" checked>
+                    <span class="radio-mark"></span>
+                    <span class="radio-label">
+                        <strong>2B</strong> — Fast (~2-3 min/symbol)
+                        <small>Good for bulk analysis</small>
+                    </span>
+                </label>
+                <label class="radio-wrapper">
+                    <input type="radio" name="model-size" value="7B">
+                    <span class="radio-mark"></span>
+                    <span class="radio-label">
+                        <strong>7B</strong> — Better quality (~10-12 min/symbol)
+                        <small>More accurate but slower</small>
+                    </span>
+                </label>
+            </div>
+        </div>
+        
         <!-- Action Buttons -->
         <div class="action-buttons">
             <button id="start-btn" class="btn btn-primary btn-large">
@@ -450,7 +473,70 @@ ZM</textarea>
 }
 
 .options-row {
-    margin: 24px 0;
+    margin: 24px 0 16px 0;
+}
+
+.model-size-options {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.model-size-options .option-label {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.radio-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    transition: var(--transition-fast);
+}
+
+.radio-wrapper:hover {
+    border-color: var(--accent-primary);
+    background: rgba(99, 102, 241, 0.05);
+}
+
+.radio-wrapper input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-primary);
+    margin-top: 2px;
+}
+
+.radio-wrapper input:checked + .radio-mark + .radio-label {
+    color: var(--text-primary);
+}
+
+.radio-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.radio-label strong {
+    color: var(--accent-primary);
+}
+
+.radio-label small {
+    font-size: 0.75rem;
+    color: var(--text-muted);
 }
 
 .checkbox-wrapper {
@@ -600,8 +686,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const startBtn = document.getElementById('start-btn');
     const stopBtn = document.getElementById('stop-btn');
     const useLocalModel = document.getElementById('use-local-model');
+    const modelSizeOptions = document.getElementById('model-size-options');
     
     let statusInterval = null;
+    
+    // Toggle model size options visibility
+    useLocalModel.addEventListener('change', function() {
+        modelSizeOptions.style.display = this.checked ? 'block' : 'none';
+    });
+    
+    // Get selected model name
+    function getSelectedModel() {
+        const modelSize = document.querySelector('input[name="model-size"]:checked').value;
+        return modelSize === '2B' ? 'Qwen/Qwen2-VL-2B-Instruct' : 'Qwen/Qwen2-VL-7B-Instruct';
+    }
     
     // Update symbol count
     function updateSymbolCount() {
@@ -661,7 +759,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     symbols: symbols,
-                    use_local_model: useLocalModel.checked
+                    use_local_model: useLocalModel.checked,
+                    model_name: useLocalModel.checked ? getSelectedModel() : null
                 })
             });
             

@@ -190,7 +190,7 @@ def serve_report_asset(filename):
 # BULK ANALYSIS ENDPOINTS
 # ============================================================
 
-def run_bulk_analysis_worker(symbols: list, use_local_model: bool = True):
+def run_bulk_analysis_worker(symbols: list, use_local_model: bool = True, model_name: str = None):
     """Worker thread for bulk analysis."""
     import asyncio
     import time
@@ -201,17 +201,22 @@ def run_bulk_analysis_worker(symbols: list, use_local_model: bool = True):
     bulk_analysis_state["completed"] = []
     bulk_analysis_state["errors"] = []
     
-    # Import analysis function based on model choice
-    if use_local_model:
-        from main_multiagent_local import analyze_with_local_model as analyze_func
-    else:
-        from main_multiagent import analyze_with_multiagent as analyze_func
-    
     # Create a single event loop for all analyses
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     
     try:
+        # Import and configure analysis function based on model choice
+        if use_local_model:
+            from main_multiagent_local import analyze_with_local_model
+            # Use provided model or default to 2B for speed
+            selected_model = model_name or "Qwen/Qwen2-VL-2B-Instruct"
+            
+            async def analyze_func(symbol):
+                return await analyze_with_local_model(symbol, model_name=selected_model)
+        else:
+            from main_multiagent import analyze_with_multiagent as analyze_func
+        
         for i, symbol in enumerate(symbols):
             if not bulk_analysis_state["running"]:
                 break  # Cancelled
@@ -248,6 +253,7 @@ def start_bulk_analysis():
     data = request.get_json()
     symbols = data.get("symbols", [])
     use_local = data.get("use_local_model", True)
+    model_name = data.get("model_name", None)
     
     if not symbols:
         return jsonify({"error": "No symbols provided"}), 400
@@ -258,7 +264,7 @@ def start_bulk_analysis():
     # Start worker thread
     thread = threading.Thread(
         target=run_bulk_analysis_worker,
-        args=(symbols, use_local),
+        args=(symbols, use_local, model_name),
         daemon=True
     )
     thread.start()
@@ -266,7 +272,8 @@ def start_bulk_analysis():
     return jsonify({
         "status": "started",
         "total": len(symbols),
-        "symbols": symbols
+        "symbols": symbols,
+        "model": model_name if use_local else "gemini"
     })
 
 
