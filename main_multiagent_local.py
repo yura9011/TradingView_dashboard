@@ -144,15 +144,15 @@ async def analyze_with_local_model(
     logger.info(f"📦 Model: {model_name}")
     logger.info("=" * 60)
     
-    # Step 1: Capture chart (daily, 3 months)
-    logger.info("📸 Capturing chart (daily, 3 months)...")
+    # Step 1: Capture chart (daily, 1 year)
+    logger.info("📸 Capturing chart (daily, 1 year)...")
     chart_capture = get_chart_capture()
     chart_path, price_range = await asyncio.to_thread(
         chart_capture.capture_sync,
         symbol=symbol,
         exchange=exchange,
         interval="D",
-        range_months=3,
+        range_months=12,
     )
     logger.info(f"   Chart saved: {chart_path}")
     

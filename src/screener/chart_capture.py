@@ -198,18 +198,28 @@ class ChartCapture:
                 # Try multiple methods to set the date range
                 range_set = False
                 
+                # Convert months to TradingView format (1Y, 3M, 6M, etc.)
+                if range_months >= 12:
+                    range_label = "1Y"
+                elif range_months >= 6:
+                    range_label = "6M"
+                elif range_months >= 3:
+                    range_label = "3M"
+                else:
+                    range_label = "1M"
+                
                 # Method 1: Try clicking on date range selector
                 try:
                     range_selector = await page.query_selector('[data-name="date-ranges-menu"]')
                     if range_selector:
                         await range_selector.click()
                         await page.wait_for_timeout(500)
-                        # Click on 3M option
-                        range_option = await page.query_selector(f'text="{range_months}M"')
+                        # Click on range option (1Y, 3M, etc.)
+                        range_option = await page.query_selector(f'text="{range_label}"')
                         if range_option:
                             await range_option.click()
                             await page.wait_for_timeout(2000)
-                            logger.info(f"Set range to {range_months}M via menu")
+                            logger.info(f"Set range to {range_label} via menu")
                             range_set = True
                 except Exception as e:
                     logger.debug(f"Method 1 (menu) failed: {e}")
@@ -221,7 +231,7 @@ class ChartCapture:
                         await page.keyboard.press("Alt+r")
                         await page.wait_for_timeout(500)
                         # Type the range
-                        await page.keyboard.type(f"{range_months}M")
+                        await page.keyboard.type(range_label)
                         await page.keyboard.press("Enter")
                         await page.wait_for_timeout(1000)
                         logger.info(f"Attempted to set range via keyboard")
