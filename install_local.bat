@@ -130,11 +130,18 @@ echo.
 echo Para abrir el dashboard:
 echo    run_dashboard.bat
 echo.
+echo CARACTERISTICAS:
+echo    - YOLO: Deteccion de patrones (Double Top/Bottom, H^&S, Triangle)
+echo    - Qwen2-VL: Analisis de tendencia y niveles
+echo    - Dave: Risk Manager (reglas)
+echo    - Emily: Sentiment Analyst (reglas)
+echo.
 echo MODELOS DISPONIBLES:
 echo    - 2B: Rapido (~2-3 min/simbolo) - Recomendado para bulk
 echo    - 7B: Mejor calidad (~10-12 min/simbolo)
 echo.
-echo NOTA: La primera ejecucion descargara el modelo
-echo       2B = ~4GB, 7B = ~15GB
+echo NOTA: La primera ejecucion descargara:
+echo       - YOLO stockmarket model (~50MB)
+echo       - Qwen2-VL: 2B = ~4GB, 7B = ~15GB
 echo.
 pause

@@ -20,6 +20,13 @@ from src.agents.specialists.base_agent_local import AgentResponse
 from src.screener.client import ScreenerClient
 from src.models import Market
 
+# Optional YOLO import (try/except for backwards compatibility)
+try:
+    from src.agents.specialists.pattern_detector_yolo import YOLOPatternDetectorAgent
+    YOLO_AVAILABLE = True
+except ImportError:
+    YOLO_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 # Default model (2B for RTX 3070 / 8GB VRAM compatibility)
@@ -97,22 +104,32 @@ class CoordinatorAgentLocal:
     5. Final Synthesis (Otto)
     """
     
-    def __init__(self, model_name: str = None, market: Market = Market.AMERICA):
+    def __init__(self, model_name: str = None, market: Market = Market.AMERICA, use_yolo: bool = True):
         """Initialize coordinator with all specialist agents.
         
         Args:
             model_name: HuggingFace model name (default: Qwen/Qwen2-VL-2B-Instruct)
             market: Target market (AMERICA, CRYPTO, FOREX)
+            use_yolo: If True, use YOLOv8 for pattern detection (more accurate)
         """
         self.model_name = model_name or DEFAULT_MODEL
         self.market = market
+        self.use_yolo = use_yolo and YOLO_AVAILABLE
         
         logger.info("Initializing QuantAgents-Local Team...")
         logger.info(f"Model: {self.model_name}")
         logger.info(f"Market: {market.value}")
+        logger.info(f"YOLO Pattern Detection: {'ENABLED' if self.use_yolo else 'DISABLED (using VLM)'}")
         
-        # Visual agents (use Qwen2-VL)
-        self.pattern_detector = PatternDetectorAgentLocal(model_name=self.model_name)
+        # Pattern detector: Use YOLO if available and enabled, else VLM
+        if self.use_yolo:
+            self.pattern_detector = YOLOPatternDetectorAgent(confidence_threshold=0.15)
+            logger.info("  📊 Pattern Detector: YOLOv8 (foduucom/stockmarket-pattern-detection)")
+        else:
+            self.pattern_detector = PatternDetectorAgentLocal(model_name=self.model_name)
+            logger.info("  📊 Pattern Detector: Qwen2-VL")
+        
+        # Visual agents (use Qwen2-VL for trend and levels)
         self.trend_analyst = TrendAnalystAgentLocal(model_name=self.model_name)
         self.levels_calculator = LevelsCalculatorAgentLocal(model_name=self.model_name)
         
@@ -483,12 +500,13 @@ class CoordinatorAgentLocal:
         )
 
 
-def get_coordinator_local(model_name: str = None, market: Market = Market.AMERICA) -> CoordinatorAgentLocal:
+def get_coordinator_local(model_name: str = None, market: Market = Market.AMERICA, use_yolo: bool = True) -> CoordinatorAgentLocal:
     """Factory function for CoordinatorAgentLocal.
     
     Args:
         model_name: HuggingFace model name
         market: Target market (AMERICA, CRYPTO, FOREX)
+        use_yolo: If True, use YOLOv8 for pattern detection (default: True)
     """
-    return CoordinatorAgentLocal(model_name=model_name, market=market)
+    return CoordinatorAgentLocal(model_name=model_name, market=market, use_yolo=use_yolo)
 

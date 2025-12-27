@@ -67,6 +67,16 @@ qwen-vl-utils>=0.0.2
 # pip install flash-attn --no-build-isolation
 
 # ============================================
+# YOLO PATTERN DETECTION (NEW!)
+# ============================================
+# YOLOv8 for accurate chart pattern detection
+# Uses pretrained model: foduucom/stockmarket-pattern-detection-yolov8
+# Detects: Double Top/Bottom, Head & Shoulders, Triangles
+
+ultralytics>=8.0.0
+huggingface_hub>=0.20.0
+
+# ============================================
 # OPTIONAL: DEVELOPMENT
 # ============================================
 # pytest>=7.0.0

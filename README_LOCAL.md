@@ -1,104 +1,121 @@
 # QuantAgents Local - Multi-Agent Trading Analysis
 
-Sistema de análisis técnico multi-agente usando modelos de visión local (Qwen2-VL).
+Sistema de análisis técnico multi-agente usando **YOLO** para patrones + **Qwen2-VL** para tendencia/niveles.
 
-## Requisitos
+## 🚀 Instalación Rápida
 
-### Hardware
-- **GPU recomendada:** RTX 3070 o superior (8GB+ VRAM)
-- **Modelo:** Qwen2-VL-2B-Instruct (~4GB VRAM)
-
-### Software
 ```bash
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
-pip install transformers accelerate pillow
-pip install tradingview-screener
-pip install selenium webdriver-manager
+# Windows - Ejecutar instalador automático
+install_local.bat
 ```
 
-## Uso Rápido
+### Requisitos
+- **Python 3.10 o 3.11** (recomendado)
+- **GPU NVIDIA** (opcional, recomendado para velocidad)
+- **8GB+ VRAM** para Qwen2-VL-2B
 
-### Análisis con modelo local (GPU)
+## 📊 Uso
+
+### Ejecutar análisis
 ```bash
-python main_multiagent_local.py --symbol AAPL
+run_analysis.bat AAPL
 ```
 
-### Análisis con Gemini API (cloud)
+### Ver dashboard
 ```bash
-python main_multiagent.py --symbol AAPL
+run_dashboard.bat
 ```
 
-## Arquitectura
+## 🧠 Arquitectura
 
 ```
-┌──────────────────────────────────────────────────────┐
-│                  Coordinator (Otto)                   │
-│                  Final Synthesis                      │
-└───────────────────────┬──────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                    COORDINATOR (Otto)                            │
+│                    Final Synthesis + Veto Logic                  │
+└───────────────────────┬─────────────────────────────────────────┘
                         │
-    ┌───────────────────┼───────────────────┐
-    │                   │                   │
-    ▼                   ▼                   ▼
-┌─────────┐      ┌─────────┐      ┌─────────┐
-│ Pattern │      │  Trend  │      │ Levels  │
-│ Detector│      │ Analyst │      │ Calc    │
-│ (Bob)   │      │         │      │         │
-└─────────┘      └─────────┘      └─────────┘
-    │                   │                   │
-    └───────────────────┼───────────────────┘
-                        │
-    ┌───────────────────┼───────────────────┐
-    │                   │                   │
-    ▼                   ▼                   ▼
-┌─────────┐      ┌─────────┐      ┌─────────┐
-│  Risk   │      │Sentiment│      │  VETO   │
-│ Manager │      │ Analyst │      │ System  │
-│ (Dave)  │      │ (Emily) │      │         │
-└─────────┘      └─────────┘      └─────────┘
+    ┌───────────────────┼───────────────────────┐
+    │                   │                       │
+    ▼                   ▼                       ▼
+┌─────────────┐   ┌─────────────┐        ┌─────────────┐
+│   YOLO      │   │  Qwen2-VL   │        │  Qwen2-VL   │
+│  Pattern    │   │   Trend     │        │   Levels    │
+│  Detector   │   │  Analyst    │        │   Calc      │
+│  (93% acc)  │   │             │        │             │
+└─────────────┘   └─────────────┘        └─────────────┘
+        │                   │                   │
+        └───────────────────┼───────────────────┘
+                            │
+    ┌───────────────────────┼───────────────────────┐
+    │                       │                       │
+    ▼                       ▼                       ▼
+┌─────────────┐       ┌─────────────┐        ┌─────────────┐
+│    Dave     │       │   Emily     │        │   TRIPLE    │
+│    Risk     │       │  Sentiment  │        │    VETO     │
+│   Manager   │       │   Analyst   │        │   SYSTEM    │
+│(rule-based) │       │(rule-based) │        │             │
+└─────────────┘       └─────────────┘        └─────────────┘
 ```
 
-## Sistema de Veto
+## 🎯 Patrones Detectados (YOLO)
 
-El sistema incluye 3 niveles de veto para proteger el capital:
+| Patrón | Clase YOLO | Descripción |
+|--------|------------|-------------|
+| Double Top | M_Head | Bearish reversal |
+| Double Bottom | W_Bottom | Bullish reversal |
+| Head & Shoulders Top | Head and shoulders top | Bearish reversal |
+| Head & Shoulders Bottom | Head and shoulders bottom | Bullish reversal |
+| Triangle | Triangle | Continuation |
 
-1. **RISK VETO (Dave):** Si ATR% > 5% → DANGEROUS → Veto automático
-2. **SENTIMENT VETO (Emily):** Si sentiment < -0.5 + setup bullish → Veto
-3. **FAKEOUT VETO:** Si breakout + RVOL < 1.5 → Veto por bajo volumen
+**Accuracy reportada:** 93% mAP @ IoU 0.5
 
-## Tests
+## 🛡️ Sistema de Veto
 
-```bash
-# Test de integración (sin modelo)
-python test_integration_flow.py
+1. **RISK VETO (Dave):** ATR% > 5% → DANGEROUS → Veto automático
+2. **SENTIMENT VETO (Emily):** Sentiment < -0.5 + setup bullish → Veto
+3. **FAKEOUT VETO:** Breakout + RVOL < 1.5 → Veto por bajo volumen
 
-# Test completo E2E (requiere GPU o usa moondream2 en CPU)
-python test_full_flow_e2e.py --symbol TSLA
+## ⚙️ Configuración
+
+### Usar YOLO (por defecto)
+```python
+from src.agents.coordinator_local import get_coordinator_local
+
+coordinator = get_coordinator_local(use_yolo=True)  # YOLO para patrones
 ```
 
-## Estructura de Archivos
+### Usar VLM solo (sin YOLO)
+```python
+coordinator = get_coordinator_local(use_yolo=False)  # Qwen2-VL para todo
+```
+
+## 📁 Estructura
 
 ```
 src/agents/
 ├── coordinator_local.py      # Orquestador principal
 ├── specialists/
-│   ├── pattern_detector*.py  # Detección de patrones
-│   ├── trend_analyst*.py     # Análisis de tendencia
-│   ├── levels_calculator*.py # Cálculo de niveles
-│   ├── risk_manager_local.py # Dave (rule-based)
-│   └── news_analyst_local.py # Emily (rule-based)
+│   ├── pattern_detector_yolo.py  # YOLO (nuevo!)
+│   ├── pattern_detector_local.py # VLM (fallback)
+│   ├── trend_analyst_local.py    # Qwen2-VL
+│   ├── levels_calculator_local.py# Qwen2-VL
+│   ├── risk_manager_local.py     # Dave (rule-based)
+│   └── news_analyst_local.py     # Emily (rule-based)
 ```
 
-## Output
+## ⏱️ Tiempos de Ejecución
+
+| Componente | Hardware | Tiempo |
+|------------|----------|--------|
+| YOLO Pattern Detection | CPU | ~2s |
+| Qwen2-VL (Trend+Levels) | RTX 3070 | ~30-60s |
+| Qwen2-VL (Trend+Levels) | CPU | ~10-15 min |
+| Risk/Sentiment Analysis | CPU | <1s |
+
+## 📤 Output
 
 Cada análisis genera:
 - Signal en DB (`data/signals.db`)
 - Chart capturado (`data/charts/`)
+- Chart anotado con YOLO (`*_yolo.png`)
 - Report markdown (`data/reports/`)
-
-## Tiempos de Ejecución
-
-| Hardware | Tiempo por análisis |
-|----------|---------------------|
-| RTX 3070 | ~30-60 segundos |
-| RTX 4090 | ~15-20 segundos |
-| CPU only | ~10-15 minutos |
