@@ -37,6 +37,14 @@ class MACDResult:
 
 
 @dataclass
+class ATRResult:
+    """ATR calculation result."""
+    period: int
+    value: float
+    prices_used: int
+
+
+@dataclass
 class FibonacciLevels:
     """Fibonacci retracement levels."""
     level_0: float      # 0%
@@ -62,6 +70,54 @@ class FibonacciLevels:
 class IndicatorTools:
     """MCP-style tools for technical indicator calculations."""
     
+    @staticmethod
+    def calculate_atr(
+        highs: List[float],
+        lows: List[float],
+        closes: List[float],
+        period: int = 14
+    ) -> ATRResult:
+        """Calculate Average True Range (ATR).
+        
+        Args:
+            highs: List of high prices
+            lows: List of low prices
+            closes: List of closing prices
+            period: ATR period (default 14)
+            
+        Returns:
+            ATRResult with calculated value
+        """
+        if len(highs) != len(lows) or len(lows) != len(closes):
+            raise ValueError("Price lists must have same length")
+        
+        if len(closes) < period + 1:
+            raise ValueError(f"Need at least {period + 1} prices for ATR")
+
+        # Calculate True Ranges
+        tr_values = []
+        for i in range(1, len(closes)):
+            h = highs[i]
+            l = lows[i]
+            pc = closes[i-1]
+            
+            tr = max(h - l, abs(h - pc), abs(l - pc))
+            tr_values.append(tr)
+            
+        # First ATR is SMA of TRs
+        atr = sum(tr_values[:period]) / period
+        
+        # Subsequent ATRs using Wilder's Smoothing
+        # ATR_current = ((ATR_prev * (period - 1)) + TR_current) / period
+        for i in range(period, len(tr_values)):
+            atr = ((atr * (period - 1)) + tr_values[i]) / period
+            
+        return ATRResult(
+            period=period,
+            value=round(atr, 4),
+            prices_used=len(closes)
+        )
+
     @staticmethod
     def calculate_ema(prices: List[float], period: int) -> EMAResult:
         """Calculate Exponential Moving Average.
