@@ -87,7 +87,8 @@ Captura screenshots de TradingView usando Selenium:
 from src.screener.chart_capture import get_chart_capture
 
 capture = get_chart_capture()
-path = capture.capture_sync("AAPL", "NASDAQ")
+capture = get_chart_capture()
+path = capture.capture_sync("AAPL") # Exchange is optional (auto-detect)
 ```
 
 ## 🎨 Visual (`visual/`)

@@ -26,6 +26,19 @@ run_analysis.bat AAPL
 run_dashboard.bat
 ```
 
+## 🧪 Verificación y Pruebas
+
+Para validar que el sistema funciona correctamente (Captura + Análisis + Reporte), ejecuta:
+
+```bash
+run_test_full.bat
+```
+
+Esto realizará una prueba completa en **MELI**:
+1. Capturará/Cargará el chart.
+2. Ejecutará el pipeline de análisis (Pattern Detector + VSA).
+3. Generará una imagen anotada en `data/charts/MELI_..._system_test.png`.
+
 ## 🧠 Arquitectura (VSA Upgrade)
 
 El sistema ha evolucionado de Análisis Técnico Básico a **VSA (Volume Spread Analysis)** profesional.
