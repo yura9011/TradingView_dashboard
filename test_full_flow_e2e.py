@@ -150,7 +150,7 @@ class FullFlowOrchestrator:
     
     def capture_chart(self, symbol: str, exchange: str = "NASDAQ") -> str:
         """Step 1: Capture chart from TradingView."""
-        logger.info(f"📸 Capturing chart for {exchange}:{symbol}...")
+        logger.info(f"📸 Capturing chart for {exchange}:{symbol} (daily, 1 month)...")
         
         from src.screener.chart_capture import get_chart_capture
         
@@ -159,7 +159,7 @@ class FullFlowOrchestrator:
             symbol=symbol,
             exchange=exchange,
             interval="D",
-            range_months=3,
+            range_months=1,
         )
         
         logger.info(f"   Chart saved: {chart_path}")

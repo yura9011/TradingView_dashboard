@@ -306,8 +306,8 @@ class ChartCapture:
         self,
         symbol: str,
         exchange: str = "", # Default empty to let TV find it
-        interval: str = "30", # Default 30 min as requested
-        range_months: int = 1, # Default 1 month for 30m
+        interval: str = "D", # Default daily
+        range_months: int = 1, # Default 1 month
     ) -> Tuple[str, Dict[str, float]]:
         """Synchronous wrapper for capture."""
         loop = asyncio.new_event_loop()

@@ -118,15 +118,28 @@ async def analyze_with_multiagent(symbol: str, exchange: str = "NASDAQ"):
     logger.info(f"🚀 Multi-Agent Analysis: {exchange}:{symbol}")
     logger.info("=" * 60)
     
-    # Step 1: Capture chart
-    logger.info("📸 Capturing chart (weekly timeframe)...")
+    # Step 1: Capture chart (daily, 1 month)
+    logger.info("📸 Capturing chart (daily, 1 month)...")
     chart_capture = get_chart_capture()
-    chart_path = await asyncio.to_thread(
+    chart_path, price_range = await asyncio.to_thread(
         chart_capture.capture_sync,
         symbol=symbol,
         exchange=exchange,
+        interval="D",
+        range_months=1,
     )
     logger.info(f"   Chart saved: {chart_path}")
+    
+    # Build price context from OCR if available and valid
+    price_context = ""
+    if price_range and price_range.get("ocr_success"):
+        price_context = f"IMPORTANT - Price range visible on chart Y-axis: {price_range['price_range_text']}. "
+        if price_range.get("current_price"):
+            price_context += f"Approximate current price: ${price_range['current_price']:.2f}. "
+        price_context += "Use these values as reference for support/resistance levels."
+        logger.info(f"   ✅ OCR Price Range: {price_range['price_range_text']}")
+    else:
+        logger.info("   ⚠️  OCR not available - model will estimate prices from chart visuals")
     
     # Step 2: Multi-agent analysis
     logger.info("\n🤖 Running Multi-Agent Analysis...")

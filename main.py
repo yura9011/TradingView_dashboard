@@ -109,12 +109,14 @@ class TradingAnalysisAgent:
         logger.info(f"{'='*60}")
         
         try:
-            # Step 1: Capture chart screenshot
-            logger.info("📸 Step 1: Capturing chart...")
-            chart_path = await asyncio.to_thread(
+            # Step 1: Capture chart screenshot (daily, 1 month)
+            logger.info("📸 Step 1: Capturing chart (daily, 1 month)...")
+            chart_path, price_range = await asyncio.to_thread(
                 self.chart_capture.capture_sync,
                 symbol=symbol,
                 exchange=exchange,
+                interval="D",
+                range_months=1,
             )
             logger.info(f"   Chart saved: {chart_path}")
             

@@ -40,7 +40,7 @@ async def main():
     image_path = None
     
     if not args.skip_capture:
-        print(f"\n📸 Step 1: Capturing Chart...")
+        print(f"\n📸 Step 1: Capturing Chart (daily, 1 month)...")
         capture = ChartCapture(headless=True)
         try:
             # capture returns a Path object
@@ -48,7 +48,7 @@ async def main():
                 symbol=symbol,
                 exchange=exchange,
                 interval="D",
-                range_months=3
+                range_months=1
             )
             image_path = str(path)
             print(f"   Success! Saved to: {image_path}")
