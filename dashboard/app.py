@@ -206,16 +206,9 @@ def run_bulk_analysis_worker(symbols: list, use_local_model: bool = True, model_
     asyncio.set_event_loop(loop)
     
     try:
-        # Import and configure analysis function based on model choice
-        if use_local_model:
-            from main_multiagent_local import analyze_with_local_model
-            # Use provided model or default to 2B for speed
-            selected_model = model_name or "Qwen/Qwen2-VL-2B-Instruct"
-            
-            async def analyze_func(symbol):
-                return await analyze_with_local_model(symbol, model_name=selected_model)
-        else:
-            from main_multiagent import analyze_with_multiagent as analyze_func
+        # Use unified analysis module
+        from src.analysis import run_analysis
+        selected_model = model_name or "Qwen/Qwen2-VL-2B-Instruct"
         
         for i, symbol in enumerate(symbols):
             if not bulk_analysis_state["running"]:
@@ -225,8 +218,11 @@ def run_bulk_analysis_worker(symbols: list, use_local_model: bool = True, model_
             bulk_analysis_state["progress"] = i
             
             try:
-                # Run analysis in the shared event loop
-                loop.run_until_complete(analyze_func(symbol.strip().upper()))
+                loop.run_until_complete(run_analysis(
+                    symbol=symbol.strip().upper(),
+                    use_local=use_local_model,
+                    model_name=selected_model,
+                ))
                 bulk_analysis_state["completed"].append(symbol)
             except Exception as e:
                 bulk_analysis_state["errors"].append({
@@ -236,7 +232,7 @@ def run_bulk_analysis_worker(symbols: list, use_local_model: bool = True, model_
             
             bulk_analysis_state["progress"] = i + 1
             
-            # Small delay between analyses to prevent resource exhaustion
+            # Small delay between analyses
             time.sleep(1)
     finally:
         loop.close()
