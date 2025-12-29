@@ -159,6 +159,44 @@ class CoordinatorAgentLocal:
                 avg_vol = data.get('average_volume_10d_calc', current_vol)
                 rvol = current_vol / avg_vol if avg_vol > 0 else 1.0
                 data['rvol'] = rvol
+                
+                # --- VSA METRICS (DAILY) ---
+                high = data.get('high', 0.0)
+                low = data.get('low', 0.0)
+                close = data.get('close', 0.0)
+                atr = data.get('ATR', 0.0)
+                
+                # 1. Spread (Range)
+                spread = high - low
+                data['spread'] = spread
+                
+                # 2. Spread Quality (Wide/Narrow vs ATR)
+                if atr > 0:
+                    spread_ratio = spread / atr
+                    if spread_ratio > 1.2:
+                        data['spread_type'] = "WIDE"
+                    elif spread_ratio < 0.8:
+                        data['spread_type'] = "NARROW"
+                    else:
+                        data['spread_type'] = "AVERAGE"
+                else:
+                    data['spread_type'] = "UNKNOWN"
+                
+                # 3. Close Position ((Close - Low) / Spread)
+                # 0.0 = Low, 1.0 = High
+                if spread > 0:
+                    close_pos = (close - low) / spread
+                    data['close_position_pct'] = close_pos
+                    if close_pos > 0.66:
+                        data['close_loc'] = "HIGH"
+                    elif close_pos < 0.33:
+                        data['close_loc'] = "LOW"
+                    else:
+                        data['close_loc'] = "MID"
+                else:
+                    data['close_loc'] = "UNKNOWN"
+                    data['close_position_pct'] = 0.5
+                
                 return data
         except Exception as e:
             logger.warning(f"Could not fetch market data for {symbol}: {e}")
@@ -174,6 +212,7 @@ class CoordinatorAgentLocal:
         trend_dir: str,
         trend_strength: str,
         phase: str,
+        vsa_signal: str,  # Added
         risk_assessment: str,
         sentiment_label: str,
         stop_loss: str,
@@ -204,9 +243,11 @@ class CoordinatorAgentLocal:
         else:
             parts.append("No clear pattern.")
         
-        # Trend
+        # Trend & VSA
         if trend_dir != "unknown":
-            parts.append(f"Trend: {trend_dir} ({trend_strength}), Phase: {phase}.")
+            parts.append(f"Trend: {trend_dir} ({trend_strength}). Phase: {phase.title()}.")
+            if vsa_signal and vsa_signal.lower() != "none" and vsa_signal.lower() != "n/a":
+                parts.append(f"⚡ VSA Signal: {vsa_signal.upper()}.")
         
         # Levels
         if support and resistance:
@@ -258,6 +299,11 @@ class CoordinatorAgentLocal:
         - ATR (Volatility): {atr_value:.2f}
         - RVOL: {rvol:.2f}
         - Volume: {volume:,}
+        
+        VSA DAILY METRICS (Context for Professional Analysis):
+        - Spread: {market_data.get('spread_type', 'UNKNOWN')} (${market_data.get('spread', 0.0):.2f})
+        - Close Position: {market_data.get('close_loc', 'UNKNOWN')} of bar ({market_data.get('close_position_pct', 0.5):.0%})
+        - Volume Effort: {'ULTRA HIGH' if rvol > 2.0 else 'HIGH' if rvol > 1.2 else 'LOW' if rvol < 0.8 else 'AVERAGE'} (RVOL: {rvol:.2f})
         """
         
         if additional_context:
@@ -274,8 +320,19 @@ class CoordinatorAgentLocal:
         logger.info("🔍 Step 1/4: Pattern Detection (local)...")
         pattern_result = self.pattern_detector.analyze(image_path, full_context)
         
+        # Save annotated chart if pattern detected (YOLO only)
+        if self.use_yolo and pattern_result.success and pattern_result.parsed.get("pattern", "none") != "none":
+            try:
+                annotated_path = self.pattern_detector.get_annotated_chart(image_path)
+                if annotated_path:
+                    logger.info(f"✅ Saved annotated YOLO chart: {annotated_path}")
+            except Exception as e:
+                logger.warning(f"Failed to save annotated chart: {e}")
+        
         logger.info("📈 Step 2/4: Trend Analysis (local)...")
         trend_result = self.trend_analyst.analyze(image_path, full_context)
+        
+        vsa_signal = trend_result.parsed.get("vsa_signal", "none")
         
         logger.info("📊 Step 3/4: Levels Calculation (local)...")
         levels_result = self.levels_calculator.analyze(image_path, full_context)
@@ -283,11 +340,12 @@ class CoordinatorAgentLocal:
         # ========== STEP 2: NEWS/SENTIMENT (Emily) ==========
         logger.info("📰 Step 4a: News/Sentiment Analysis (Emily)...")
         news_result = self.news_analyst.analyze(
-            market_context=f"Technical analysis for {symbol}. RSI: {rsi}, MACD: {macd}",
+            market_context=f"Technical analysis for {symbol}. RSI: {rsi}, MACD: {macd}, VSA: {vsa_signal}",
             current_date=f"{current_date} ({day_of_week})",
             symbol=symbol,
             rsi=rsi,
             macd=macd,
+            vsa_signal=vsa_signal,
         )
         
         # ========== STEP 3: RISK ANALYSIS (Dave) ==========
@@ -416,6 +474,7 @@ class CoordinatorAgentLocal:
             trend_dir=trend_dir,
             trend_strength=trend_strength,
             phase=phase,
+            vsa_signal=trend.parsed.get("vsa_signal", "none"),
             risk_assessment=risk_assessment,
             sentiment_label=sentiment_label,
             stop_loss=risk.get("stop_loss", "N/A"),

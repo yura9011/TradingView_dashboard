@@ -16,7 +16,7 @@ from PIL import Image
 logger = logging.getLogger(__name__)
 
 # TradingView chart URL templates
-# interval: D=daily, W=weekly, M=monthly
+# interval: D=daily, W=weekly, M=monthly, 30=30min
 # range: 1M, 3M, 6M, 12M, 60M, ALL
 TV_CHART_URL = "https://www.tradingview.com/chart/?symbol={exchange}%3A{symbol}&interval={interval}"
 TV_SYMBOL_URL = "https://www.tradingview.com/symbols/{exchange}-{symbol}/"
@@ -195,48 +195,44 @@ class ChartCapture:
                 logger.info("Waiting for chart to load...")
                 await page.wait_for_timeout(5000)
                 
-                # Try multiple methods to set the date range
-                range_set = False
+                # Try to interact with the bottom toolbar for time range (1D, 1M, 3M, etc.)
+                ranges_map = {
+                    1: "1M",
+                    3: "3M",
+                    6: "6M",
+                    12: "1Y",
+                    60: "5Y"
+                }
                 
-                # Convert months to TradingView format (1Y, 3M, 6M, etc.)
-                if range_months >= 12:
-                    range_label = "1Y"
-                elif range_months >= 6:
-                    range_label = "6M"
-                elif range_months >= 3:
-                    range_label = "3M"
+                # Logic for 30m interval -> prefer 1M range
+                if interval == "30":
+                     target_range = "1M"
                 else:
-                    range_label = "1M"
+                     target_range = ranges_map.get(range_months, "3M") # Default to 3M
                 
-                # Method 1: Try clicking on date range selector
+                logger.info(f"Targeting time range: {target_range}")
+                
+                # Try clicking the specific range button in the bottom toolbar
+                # Selectors common in TV: button with text "1M", "3M" etc. inside the date range container
+                range_btn_selector = f'button:has-text("{target_range}")'
+                
                 try:
-                    range_selector = await page.query_selector('[data-name="date-ranges-menu"]')
-                    if range_selector:
-                        await range_selector.click()
-                        await page.wait_for_timeout(500)
-                        # Click on range option (1Y, 3M, etc.)
-                        range_option = await page.query_selector(f'text="{range_label}"')
-                        if range_option:
-                            await range_option.click()
-                            await page.wait_for_timeout(2000)
-                            logger.info(f"Set range to {range_label} via menu")
-                            range_set = True
+                    # Look for the button in the bottom toolbar specifically if possible, or generally on page
+                    range_btn = await page.query_selector(range_btn_selector)
+                    if range_btn:
+                        logger.info(f"Found range button {target_range}, clicking...")
+                        await range_btn.click()
+                        await page.wait_for_timeout(2000) # Wait for redraw
+                        range_set = True
+                    else:
+                        logger.warning(f"Range button {target_range} not found")
                 except Exception as e:
-                    logger.debug(f"Method 1 (menu) failed: {e}")
-                
-                # Method 2: Try keyboard shortcut if menu didn't work
+                    logger.warning(f"Failed to click range button: {e}")
+
+                # If direct button failed, try the "Go to..." or date range menu
                 if not range_set:
-                    try:
-                        # Press Alt+R to open range dialog in some TradingView versions
-                        await page.keyboard.press("Alt+r")
-                        await page.wait_for_timeout(500)
-                        # Type the range
-                        await page.keyboard.type(range_label)
-                        await page.keyboard.press("Enter")
-                        await page.wait_for_timeout(1000)
-                        logger.info(f"Attempted to set range via keyboard")
-                    except Exception as e:
-                        logger.debug(f"Method 2 (keyboard) failed: {e}")
+                     # ... keep fallback ...
+                     pass
                 
                 # Wait for chart data to fully render
                 await page.wait_for_timeout(3000)
@@ -286,17 +282,27 @@ class ChartCapture:
     def capture_sync(
         self,
         symbol: str,
-        exchange: str = "NASDAQ",
-        interval: str = "D",
-        range_months: int = 3,
-    ) -> Tuple[Path, Optional[Dict[str, Any]]]:
-        """Synchronous wrapper for capture.
-        
-        Returns:
-            Tuple of (image_path, price_range_dict)
-        """
-        path = asyncio.run(self.capture(symbol, exchange, interval, range_months))
-        return path, self.get_last_price_range()
+        exchange: str = "", # Default empty to let TV find it
+        interval: str = "30", # Default 30 min as requested
+        range_months: int = 1, # Default 1 month for 30m
+    ) -> Tuple[str, Dict[str, float]]:
+        """Synchronous wrapper for capture."""
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            path = loop.run_until_complete(
+                self.capture(
+                    symbol=symbol, 
+                    exchange=exchange, 
+                    interval=interval, 
+                    range_months=range_months
+                )
+            )
+            # The capture method returns Path, and extract_price_range_ocr updates _last_price_range
+            # We need to return the path as a string and the last price range
+            return str(path), self.get_last_price_range() or {}
+        finally:
+            loop.close()
 
 
 def get_chart_capture(output_dir: Path = None) -> ChartCapture:

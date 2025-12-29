@@ -12,6 +12,14 @@ from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
+# Try to import drawing libraries
+try:
+    from PIL import Image, ImageDraw, ImageFont
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
+    logger.warning("PIL not installed, manual annotation disabled")
+
 
 # Pattern name mapping from YOLO classes to our standard names
 YOLO_PATTERN_MAPPING = {
@@ -71,12 +79,68 @@ class YOLOPatternDetectorAgent:
             logger.info(f"YOLO model loaded. Classes: {list(self.model.names.values())}")
             
         except ImportError as e:
-            logger.error(f"YOLO dependencies not installed: {e}")
-            logger.error("Install with: pip install ultralytics huggingface_hub")
+            logger.error(f"❌ YOLO dependencies missing: {e}")
+            logger.error("👉 PLEASE RUN: pip install ultralytics huggingface_hub")
             self.model = None
         except Exception as e:
-            logger.error(f"Failed to load YOLO model: {e}")
+            logger.error(f"❌ Failed to load YOLO model: {e}")
             self.model = None
+    
+    def _draw_manual_annotations(self, image_path: str, output_path: str, results: list):
+        """Draw annotations manually using PIL for better control/reliability."""
+        if not PIL_AVAILABLE:
+            return False
+            
+        try:
+            img = Image.open(image_path)
+            draw = ImageDraw.Draw(img)
+            
+            # Try to load a font, fall back to default
+            try:
+                # Try common fonts
+                font_path = "arial.ttf" 
+                # On Linux/Container it might be different, but default load is okay
+                font = ImageFont.truetype(font_path, 20)
+            except IOError:
+                font = ImageFont.load_default()
+            
+            for result in results:
+                for box in result.boxes:
+                    # Get box coordinates
+                    x1, y1, x2, y2 = box.xyxy[0].tolist()
+                    
+                    # Get class and confidence
+                    cls_id = int(box.cls[0])
+                    cls_name = result.names[cls_id]
+                    conf = float(box.conf[0])
+                    pattern_name = YOLO_PATTERN_MAPPING.get(cls_name, cls_name)
+                    
+                    # Determine color based on pattern type
+                    if "bottom" in pattern_name.lower() or "bull" in pattern_name.lower():
+                        color = "#00FF00" # Green for bullish
+                    elif "top" in pattern_name.lower() or "bear" in pattern_name.lower():
+                        color = "#FF0000" # Red for bearish
+                    else:
+                        color = "#FFFF00" # Yellow for neutral
+                        
+                    # Draw box (thick)
+                    draw.rectangle([x1, y1, x2, y2], outline=color, width=3)
+                    
+                    # Draw label background
+                    label = f"{pattern_name} {conf:.0%}"
+                    # Approximate text size
+                    text_bbox = draw.textbbox((x1, y1-25), label, font=font)
+                    draw.rectangle(text_bbox, fill=color)
+                    
+                    # Draw text
+                    draw.text((x1, y1-25), label, fill="black", font=font)
+            
+            img.save(output_path)
+            return True
+            
+        except Exception as e:
+            logger.warning(f"Manual PIL drawing failed: {e}")
+            return False
     
     def analyze(self, image_path: str, market_context: str = "") -> AgentResponse:
         """
@@ -209,9 +273,15 @@ class YOLOPatternDetectorAgent:
             
             if output_path is None:
                 base, ext = os.path.splitext(image_path)
-                output_path = f"{base}_annotated{ext}"
+                output_path = f"{base}_yolo{ext}" # Force _yolo suffix
             
+            # Try manual drawing first (better quality/control)
+            if self._draw_manual_annotations(image_path, output_path, results):
+                return output_path
+                
+            # Fallback to YOLO native plotting
             for result in results:
+                # Reset plot arg to avoid display
                 result.save(filename=output_path)
             
             return output_path

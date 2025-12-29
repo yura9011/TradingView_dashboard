@@ -26,11 +26,14 @@ run_analysis.bat AAPL
 run_dashboard.bat
 ```
 
-## 🧠 Arquitectura
+## 🧠 Arquitectura (VSA Upgrade)
+
+El sistema ha evolucionado de Análisis Técnico Básico a **VSA (Volume Spread Analysis)** profesional.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    COORDINATOR (Otto)                            │
+│           Calcula Spread, RVOL y Close Position (VSA)           │
 │                    Final Synthesis + Veto Logic                  │
 └───────────────────────┬─────────────────────────────────────────┘
                         │
@@ -38,10 +41,10 @@ run_dashboard.bat
     │                   │                       │
     ▼                   ▼                       ▼
 ┌─────────────┐   ┌─────────────┐        ┌─────────────┐
-│   YOLO      │   │  Qwen2-VL   │        │  Qwen2-VL   │
-│  Pattern    │   │   Trend     │        │   Levels    │
-│  Detector   │   │  Analyst    │        │   Calc      │
-│  (93% acc)  │   │             │        │             │
+│   YOLO      │   │ VSA Analyst │        │ Supply/Demand │
+│  Pattern    │   │ (Prompt 3.0)│        │   Calc      │
+│  Detector   │   │  Climaxes   │        │  Imbalance  │
+│  (93% acc)  │   │  Traps      │        │  Zones      │
 └─────────────┘   └─────────────┘        └─────────────┘
         │                   │                   │
         └───────────────────┼───────────────────┘
@@ -51,11 +54,19 @@ run_dashboard.bat
     ▼                       ▼                       ▼
 ┌─────────────┐       ┌─────────────┐        ┌─────────────┐
 │    Dave     │       │   Emily     │        │   TRIPLE    │
-│    Risk     │       │  Sentiment  │        │    VETO     │
-│   Manager   │       │   Analyst   │        │   SYSTEM    │
-│(rule-based) │       │(rule-based) │        │             │
+│    Risk     │       │ Psychology  │        │    VETO     │
+│   Manager   │       │ Contrarian  │        │   SYSTEM    │
+│(rule-based) │       │ Logic       │        │             │
 └─────────────┘       └─────────────┘        └─────────────┘
 ```
+
+## 💎 Nueva Lógica VSA ("Smart Money")
+1. **Trend Analyst**: Ya no busca solo "tendencias". Busca Huellas Institucionales:
+   - **Climaxes**: Buying/Selling Climax.
+   - **Traps**: Shakeouts (Trampa bajista) y Upthrusts (Trampa alcista).
+   - **Effort vs Result**: Anomalías entre Volumen y Precio.
+2. **Levels Calculator**: Busca Zonas de **Oferta y Demanda** (Desequilibrio), no soportes estáticos.
+3. **Psychology Analyst**: Aplica lógica contraria. Si hay **Euforia (RSI > 70)** y **Venta Institucional**, emite señal de VENTA.
 
 ## 🎯 Patrones Detectados (YOLO)
 
@@ -69,11 +80,11 @@ run_dashboard.bat
 
 **Accuracy reportada:** 93% mAP @ IoU 0.5
 
-## 🛡️ Sistema de Veto
+## 🛡️ Sistema de Veto Professional
 
 1. **RISK VETO (Dave):** ATR% > 5% → DANGEROUS → Veto automático
-2. **SENTIMENT VETO (Emily):** Sentiment < -0.5 + setup bullish → Veto
-3. **FAKEOUT VETO:** Breakout + RVOL < 1.5 → Veto por bajo volumen
+2. **SMART MONEY VETO (Emily):** Euforia + Venta Institucional → Veto compra
+3. **FAKEOUT VETO:** Breakout + RVOL < 1.5 → Veto por falta de interés profesional
 
 ## ⚙️ Configuración
 
@@ -93,14 +104,14 @@ coordinator = get_coordinator_local(use_yolo=False)  # Qwen2-VL para todo
 
 ```
 src/agents/
-├── coordinator_local.py      # Orquestador principal
+├── coordinator_local.py      # Orquestador con métricas VSA (Spread/RVOL)
 ├── specialists/
-│   ├── pattern_detector_yolo.py  # YOLO (nuevo!)
-│   ├── pattern_detector_local.py # VLM (fallback)
-│   ├── trend_analyst_local.py    # Qwen2-VL
-│   ├── levels_calculator_local.py# Qwen2-VL
-│   ├── risk_manager_local.py     # Dave (rule-based)
-│   └── news_analyst_local.py     # Emily (rule-based)
+│   ├── pattern_detector_yolo.py  # YOLO (Visual)
+│   ├── pattern_detector_local.py # VLM (Fallback)
+│   ├── trend_analyst_local.py    # VSA Specialist (Qwen2-VL)
+│   ├── levels_calculator_local.py# Supply/Demand (Qwen2-VL)
+│   ├── risk_manager_local.py     # Dave (Risk)
+│   └── news_analyst_local.py     # Emily (Psychology/Contrarian)
 ```
 
 ## ⏱️ Tiempos de Ejecución

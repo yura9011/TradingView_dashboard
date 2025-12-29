@@ -87,13 +87,66 @@ class LevelsCalculatorAgentLocal(BaseAgentLocal):
         
         return result
     
+    def analyze(self, image_path: str, market_context: str = "") -> Any:
+        # Run base analysis
+        response = super().analyze(image_path, market_context)
+        
+        # Sanity check against current price if available in context
+        try:
+             price_match = re.search(r"Current Price: \$([\d,]+\.?\d*)", market_context)
+             if price_match and response.success:
+                 current_price = float(price_match.group(1).replace(",", ""))
+                 parsed = response.parsed
+                 
+                 support = parsed.get("support")
+                 resistance = parsed.get("resistance")
+                 
+                 # 1. Hallucination Check - Copying old examples
+                 if support == 15.50 and resistance == 18.00:
+                      logger.warning("🚨 Hallucination detected: Model copied example values!")
+                      parsed["support"] = None
+                      parsed["resistance"] = None
+                      parsed["description"] += " [Wait: Model copied example values, ignoring]"
+                      return response
+                 
+                 # 2. Logic Check - Support should be < Current Price (mostly)
+                 # If Support is > Current Price by >2%, it's likely wrong (or it's resistance)
+                 if support and isinstance(support, (int, float)):
+                     if support > current_price * 1.02:
+                         logger.warning(f"⚠️ Logical Swing: Support ${support} is > Current ${current_price}")
+                         # If resistance is unavailable or less than support, maybe they are swapped?
+                         if resistance and resistance < support:
+                             logger.info("Swapping Support/Resistance due to logical inversion")
+                             parsed["support"], parsed["resistance"] = resistance, support
+                         else:
+                             # Just invalid support
+                             parsed["support_reason"] = f"(Invalid: > Spot ${current_price:.2f}) " + (parsed.get("support_reason") or "")
+                             parsed["support"] = None
+
+                 # 3. Logic Check - Resistance should be > Current Price (mostly)
+                 if resistance and isinstance(resistance, (int, float)):
+                     if resistance < current_price * 0.98:
+                         logger.warning(f"⚠️ Logical Swing: Resistance ${resistance} is < Current ${current_price}")
+                         parsed["resistance_reason"] = f"(Invalid: < Spot ${current_price:.2f}) " + (parsed.get("resistance_reason") or "")
+                         parsed["resistance"] = None
+                         
+        except Exception as e:
+             logger.debug(f"Sanity verify failed: {e}")
+             
+        return response
+
     def _parse_price(self, val: str) -> Optional[float]:
         """Parse price value from various formats."""
-        if not val or val.lower() in ["unknown", "n/a", "none", "-"]:
+        if not val or not isinstance(val, str):
+            return None
+        
+        if val.lower() in ["unknown", "n/a", "none", "-", "unclear"]:
             return None
         
         try:
+            # Remove currency symbols and cleanup
             cleaned = val.replace("$", "").replace(",", "").strip()
+            # Extract first number found
             match = re.search(r'[\d.]+', cleaned)
             if match:
                 return float(match.group())

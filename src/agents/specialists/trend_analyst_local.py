@@ -47,30 +47,25 @@ class TrendAnalystAgentLocal(BaseAgentLocal):
                     
             elif line.startswith("STRENGTH:"):
                 strength = line.replace("STRENGTH:", "").strip().lower()
-                if strength in ["strong", "moderate", "weak"]:
-                    result["strength"] = strength
+                result["strength"] = strength
                     
-            elif line.startswith("PHASE:"):
-                phase = line.replace("PHASE:", "").strip().lower()
-                valid_phases = ["accumulation", "markup", "distribution", "markdown", "unclear"]
-                if phase in valid_phases:
-                    result["phase"] = phase
+            elif line.startswith("MARKET_PHASE:") or line.startswith("PHASE:"):
+                phase = line.replace("MARKET_PHASE:", "").replace("PHASE:", "").strip().lower()
+                result["phase"] = phase
             
+            elif line.startswith("VSA_SIGNAL:"):
+                signal = line.replace("VSA_SIGNAL:", "").strip()
+                if signal.lower() not in ["none", "n/a", "-", ""]:
+                    result["vsa_signal"] = signal
+            
+            elif line.startswith("VOLUME_ACTION:"):
+                action = line.replace("VOLUME_ACTION:", "").strip()
+                result["volume_action"] = action
+                    
             elif line.startswith("WYCKOFF_EVENT:"):
                 event = line.replace("WYCKOFF_EVENT:", "").strip()
-                if event.lower() not in ["none", "n/a", "-", ""]:
-                    result["wyckoff_event"] = event
-                    
-            elif line.startswith("WAVE:"):
-                wave = line.replace("WAVE:", "").strip()
-                if wave.lower() not in ["unclear", "none", "n/a", "-", ""]:
-                    result["wave"] = wave
-            
-            elif line.startswith("WAVE_COUNT:"):
-                wave_count = line.replace("WAVE_COUNT:", "").strip()
-                if wave_count.lower() not in ["unclear", "none", "n/a", "-", ""]:
-                    result["wave_count"] = wave_count
-                    
+                result["wyckoff_event"] = event if event.lower() not in ["none", ""] else None
+
             elif line.startswith("DESCRIPTION:"):
                 result["description"] = line.replace("DESCRIPTION:", "").strip()
         
@@ -78,7 +73,7 @@ class TrendAnalystAgentLocal(BaseAgentLocal):
             desc_start = raw_text.find("DESCRIPTION:") + 12
             result["description"] = raw_text[desc_start:].strip()
         
-        logger.info(f"Trend: {result['trend']} ({result['strength']}), Phase: {result['phase']}, Wave: {result['wave']}")
+        logger.info(f"Trend: {result['trend']} ({result['strength']}), Phase: {result['phase']}, Signal: {result.get('vsa_signal', 'none')}")
         logger.debug(f"Trend raw response: {raw_text[:500]}")
         
         return result

@@ -37,6 +37,7 @@ class TechnicalSentimentAnalystLocal:
         symbol: str,
         rsi: Optional[float] = None,
         macd: Optional[float] = None,
+        vsa_signal: str = "none",  # Added for Contrarian VSA Logic
         interpretation: str = "momentum",  # "momentum" or "reversal"
     ) -> Dict[str, Any]:
         """
@@ -94,6 +95,21 @@ class TechnicalSentimentAnalystLocal:
                 else:
                     sentiment_score -= 0.2
                     key_drivers.append("MACD bearish (below zero)")
+            
+            # ========== CONTRARIAN VSA DIVERGENCE (Smart Money) ==========
+            # If RSI is Extreme + VSA Signal confirms Reversal -> Strong Signal
+            if rsi is not None and vsa_signal and vsa_signal.lower() != "none":
+                vsa_lower = vsa_signal.lower()
+                
+                # Bearish Divergence (Euphoria + Distribution Signals)
+                if rsi > 65 and vsa_lower in ["buying climax", "upthrust", "no demand"]:
+                    sentiment_score -= 0.5  # Heavy bearish weight
+                    key_drivers.append(f"⚠️ SMART MONEY SELL: Euphoria (RSI {rsi:.0f}) + {vsa_signal}")
+                    
+                # Bullish Divergence (Panic + Accumulation Signals)
+                elif rsi < 35 and vsa_lower in ["selling climax", "shakeout", "test", "stopping volume"]:
+                    sentiment_score += 0.5  # Heavy bullish weight
+                    key_drivers.append(f"🟢 SMART MONEY BUY: Panic (RSI {rsi:.0f}) + {vsa_signal}")
             
             # ========== DAY OF WEEK EFFECTS ==========
             date_lower = current_date.lower()

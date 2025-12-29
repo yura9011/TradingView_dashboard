@@ -103,6 +103,7 @@ class ScreenerClient:
                 Query()
                 .select(
                     "name", "close", "change", "volume", 
+                    "open", "high", "low",  # Added for VSA (Spread/Close Position)
                     "ATR", "RSI", "MACD.macd", "MACD.signal",
                     "average_volume_10d_calc", "sector"
                 )
