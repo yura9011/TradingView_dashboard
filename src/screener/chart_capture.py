@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # TradingView chart URL templates
 # interval: D=daily, W=weekly, M=monthly, 30=30min
 # range: 1M, 3M, 6M, 12M, 60M, ALL
-TV_CHART_URL = "https://www.tradingview.com/chart/?symbol={exchange}%3A{symbol}&interval={interval}"
+TV_CHART_BASE_URL = "https://www.tradingview.com/chart/"
 TV_SYMBOL_URL = "https://www.tradingview.com/symbols/{exchange}-{symbol}/"
 
 
@@ -44,7 +44,30 @@ class ChartCapture:
         self.timeout = timeout
         self._browser: Optional[Browser] = None
         self._last_price_range: Optional[Dict[str, float]] = None
+
+    def _build_chart_url(self, symbol: str, exchange: Optional[str], interval: str) -> str:
+        """Build the TradingView chart URL.
+        
+        Args:
+            symbol: Ticker symbol
+            exchange: Exchange name or None
+            interval: Chart timeframe
+            
+        Returns:
+            Full URL string
+        """
+        # Construct symbol parameter
+        # If exchange is provided: EXCHANGE:SYMBOL
+        # If not: SYMBOL (let TV auto-select)
+        if exchange:
+            symbol_param = f"{exchange}:{symbol}"
+        else:
+            symbol_param = symbol
+            
+        return f"{TV_CHART_BASE_URL}?symbol={symbol_param}&interval={interval}"
     
+    # ... (extract_price_range_ocr method remains unchanged) ...
+
     def extract_price_range_ocr(self, image_path: Path) -> Dict[str, Any]:
         """Extract price range from chart image using OCR.
         
@@ -151,7 +174,7 @@ class ChartCapture:
     async def capture(
         self,
         symbol: str,
-        exchange: str = "NASDAQ",
+        exchange: Optional[str] = None,
         interval: str = "D",
         range_months: int = 3,
         width: int = 1920,
@@ -162,7 +185,7 @@ class ChartCapture:
         
         Args:
             symbol: Ticker symbol (e.g., MELI)
-            exchange: Exchange (e.g., NASDAQ)
+            exchange: Exchange (e.g., NASDAQ) or None to auto-detect
             interval: Chart interval (D=daily, W=weekly)
             range_months: How many months of data to show
             width: Screenshot width
@@ -185,7 +208,7 @@ class ChartCapture:
             
             try:
                 # Build URL with interval
-                url = TV_CHART_URL.format(exchange=exchange, symbol=symbol, interval=interval)
+                url = self._build_chart_url(symbol, exchange, interval)
                 logger.info(f"Navigating to {url}")
                 logger.info(f"Using {interval} interval ({range_months} months view)")
                 
