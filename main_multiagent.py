@@ -111,7 +111,7 @@ def load_api_key():
     raise ValueError("GEMINI_API_KEY not found in environment or config.yaml")
 
 
-async def analyze_with_multiagent(symbol: str, exchange: str = "NASDAQ"):
+async def analyze_with_multiagent(symbol: str, exchange: str = ""):
     """Run analysis using multi-agent architecture."""
     
     logger.info("=" * 60)
@@ -224,7 +224,7 @@ async def analyze_with_multiagent(symbol: str, exchange: str = "NASDAQ"):
 def main():
     parser = argparse.ArgumentParser(description="Multi-Agent Trading Analysis")
     parser.add_argument("--symbol", "-s", type=str, default="MELI", help="Stock symbol")
-    parser.add_argument("--exchange", "-e", type=str, default="NASDAQ", help="Exchange")
+    parser.add_argument("--exchange", "-e", type=str, default="", help="Exchange (empty for auto-detect)")
     
     args = parser.parse_args()
     

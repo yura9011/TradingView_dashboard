@@ -148,9 +148,9 @@ class FullFlowOrchestrator:
         
         logger.info("Orchestrator ready!")
     
-    def capture_chart(self, symbol: str, exchange: str = "NASDAQ") -> str:
+    def capture_chart(self, symbol: str, exchange: str = "") -> str:
         """Step 1: Capture chart from TradingView."""
-        logger.info(f"📸 Capturing chart for {exchange}:{symbol} (daily, 1 month)...")
+        logger.info(f"📸 Capturing chart for {symbol} (daily, 1 month)...")
         
         from src.screener.chart_capture import get_chart_capture
         
@@ -502,7 +502,7 @@ KEY_LEVEL: [most important price]"""
         logger.info(f"   Report: {report_path}")
         return report_path
     
-    def run_full_flow(self, symbol: str, exchange: str = "NASDAQ") -> FullAnalysisResult:
+    def run_full_flow(self, symbol: str, exchange: str = "") -> FullAnalysisResult:
         """Execute complete pipeline."""
         print("\n" + "=" * 60)
         print(f"🚀 FULL E2E FLOW: {exchange}:{symbol}")
@@ -576,7 +576,7 @@ KEY_LEVEL: [most important price]"""
 def main():
     parser = argparse.ArgumentParser(description="Full E2E Flow Test")
     parser.add_argument("--symbol", "-s", default="AAPL", help="Symbol")
-    parser.add_argument("--exchange", "-e", default="NASDAQ", help="Exchange")
+    parser.add_argument("--exchange", "-e", default="", help="Exchange (empty for auto-detect)")
     args = parser.parse_args()
     
     # Ensure directories

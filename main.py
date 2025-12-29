@@ -91,7 +91,7 @@ class TradingAnalysisAgent:
     async def analyze_symbol(
         self,
         symbol: str,
-        exchange: str = "NASDAQ",
+        exchange: str = "",  # Empty for auto-detect
         notify: bool = True,
     ) -> Optional[Signal]:
         """Run full analysis pipeline for a single symbol.
@@ -186,7 +186,7 @@ class TradingAnalysisAgent:
             traceback.print_exc()
             return None
     
-    async def run(self, symbols: List[str], exchange: str = "NASDAQ"):
+    async def run(self, symbols: List[str], exchange: str = ""):
         """Run analysis for multiple symbols sequentially.
         
         Args:
@@ -222,7 +222,7 @@ def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description="AI Trading Analysis Agent")
     parser.add_argument("--symbol", "-s", type=str, default="MELI", help="Stock symbol to analyze")
-    parser.add_argument("--exchange", "-e", type=str, default="NASDAQ", help="Exchange")
+    parser.add_argument("--exchange", "-e", type=str, default="", help="Exchange (empty for auto-detect)")
     parser.add_argument("--no-notify", action="store_true", help="Disable Telegram notifications")
     parser.add_argument("--config", "-c", type=str, help="Config file path")
     

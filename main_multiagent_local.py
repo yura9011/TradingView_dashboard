@@ -131,7 +131,7 @@ def check_system_requirements():
 
 async def analyze_with_local_model(
     symbol: str,
-    exchange: str = "NASDAQ",
+    exchange: str = "",  # Empty to let TradingView auto-detect
     model_name: str = "Qwen/Qwen2-VL-7B-Instruct",
 ):
     """Run analysis using local Qwen2-VL model."""
@@ -264,7 +264,7 @@ def main():
         description="Multi-Agent Trading Analysis with Local Qwen2-VL Model"
     )
     parser.add_argument("--symbol", "-s", type=str, default="MELI", help="Stock symbol")
-    parser.add_argument("--exchange", "-e", type=str, default="NASDAQ", help="Exchange")
+    parser.add_argument("--exchange", "-e", type=str, default="", help="Exchange (empty for auto-detect)")
     parser.add_argument(
         "--model", "-m",
         type=str,
