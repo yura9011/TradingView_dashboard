@@ -1,0 +1,404 @@
+# Pattern Definitions Registry
+# This file contains all supported chart pattern definitions.
+# Each pattern includes metadata, components, validation rules, and aliases.
+#
+# Schema version: 1.0.0
+# Last updated: 2024-12-29
+
+schema_version: "1.0.0"
+
+patterns:
+  # ===========================================
+  # REVERSAL PATTERNS
+  # ===========================================
+  
+  head_shoulders:
+    name: "Head and Shoulders"
+    category: reversal
+    direction: bearish
+    description: "A bearish reversal pattern with three peaks, the middle being highest"
+    aliases:
+      - "H&S"
+      - "head_and_shoulders"
+      - "hs_top"
+    components:
+      - name: left_shoulder
+        type: peak
+        required: true
+      - name: head
+        type: peak
+        required: true
+      - name: right_shoulder
+        type: peak
+        required: true
+      - name: neckline
+        type: trendline
+        required: true
+    validation_rules:
+      - "head.high > left_shoulder.high"
+      - "head.high > right_shoulder.high"
+      - "abs(left_shoulder.high - right_shoulder.high) < threshold"
+    min_confidence: 0.6
+    
+  inverse_head_shoulders:
+    name: "Inverse Head and Shoulders"
+    category: reversal
+    direction: bullish
+    description: "A bullish reversal pattern with three troughs, the middle being lowest"
+    aliases:
+      - "IH&S"
+      - "inverse_head_and_shoulders"
+      - "hs_bottom"
+    components:
+      - name: left_shoulder
+        type: trough
+        required: true
+      - name: head
+        type: trough
+        required: true
+      - name: right_shoulder
+        type: trough
+        required: true
+      - name: neckline
+        type: trendline
+        required: true
+    validation_rules:
+      - "head.low < left_shoulder.low"
+      - "head.low < right_shoulder.low"
+      - "abs(left_shoulder.low - right_shoulder.low) < threshold"
+    min_confidence: 0.6
+    
+  double_top:
+    name: "Double Top"
+    category: reversal
+    direction: bearish
+    description: "A bearish reversal pattern with two peaks at similar levels"
+    aliases:
+      - "M_Head"
+      - "double_high"
+      - "M_pattern"
+    components:
+      - name: first_high
+        type: peak
+        required: true
+      - name: middle_low
+        type: trough
+        required: true
+      - name: second_high
+        type: peak
+        required: true
+      - name: neckline
+        type: support
+        required: true
+    validation_rules:
+      - "abs(first_high.high - second_high.high) < threshold"
+      - "middle_low.low < first_high.high"
+    min_confidence: 0.5
+    
+  double_bottom:
+    name: "Double Bottom"
+    category: reversal
+    direction: bullish
+    description: "A bullish reversal pattern with two troughs at similar levels"
+    aliases:
+      - "W_Bottom"
+      - "double_low"
+      - "W_pattern"
+    components:
+      - name: first_low
+        type: trough
+        required: true
+      - name: middle_high
+        type: peak
+        required: true
+      - name: second_low
+        type: trough
+        required: true
+      - name: neckline
+        type: resistance
+        required: true
+    validation_rules:
+      - "abs(first_low.low - second_low.low) < threshold"
+      - "middle_high.high > first_low.low"
+    min_confidence: 0.5
+    
+  triple_top:
+    name: "Triple Top"
+    category: reversal
+    direction: bearish
+    description: "A bearish reversal pattern with three peaks at similar levels"
+    aliases:
+      - "triple_high"
+    components:
+      - name: first_high
+        type: peak
+        required: true
+      - name: second_high
+        type: peak
+        required: true
+      - name: third_high
+        type: peak
+        required: true
+      - name: neckline
+        type: support
+        required: true
+    validation_rules:
+      - "abs(first_high.high - second_high.high) < threshold"
+      - "abs(second_high.high - third_high.high) < threshold"
+    min_confidence: 0.55
+    
+  triple_bottom:
+    name: "Triple Bottom"
+    category: reversal
+    direction: bullish
+    description: "A bullish reversal pattern with three troughs at similar levels"
+    aliases:
+      - "triple_low"
+    components:
+      - name: first_low
+        type: trough
+        required: true
+      - name: second_low
+        type: trough
+        required: true
+      - name: third_low
+        type: trough
+        required: true
+      - name: neckline
+        type: resistance
+        required: true
+    validation_rules:
+      - "abs(first_low.low - second_low.low) < threshold"
+      - "abs(second_low.low - third_low.low) < threshold"
+    min_confidence: 0.55
+
+  # ===========================================
+  # CONTINUATION PATTERNS
+  # ===========================================
+  
+  bull_flag:
+    name: "Bull Flag"
+    category: continuation
+    direction: bullish
+    description: "A bullish continuation pattern with a sharp rise followed by consolidation"
+    aliases:
+      - "bullish_flag"
+      - "flag_up"
+    components:
+      - name: flagpole
+        type: trend
+        required: true
+      - name: flag
+        type: channel
+        required: true
+    validation_rules:
+      - "flagpole.direction == 'up'"
+      - "flag.slope < 0"
+    min_confidence: 0.5
+    
+  bear_flag:
+    name: "Bear Flag"
+    category: continuation
+    direction: bearish
+    description: "A bearish continuation pattern with a sharp decline followed by consolidation"
+    aliases:
+      - "bearish_flag"
+      - "flag_down"
+    components:
+      - name: flagpole
+        type: trend
+        required: true
+      - name: flag
+        type: channel
+        required: true
+    validation_rules:
+      - "flagpole.direction == 'down'"
+      - "flag.slope > 0"
+    min_confidence: 0.5
+    
+  cup_and_handle:
+    name: "Cup and Handle"
+    category: continuation
+    direction: bullish
+    description: "A bullish continuation pattern resembling a cup with a handle"
+    aliases:
+      - "cup_handle"
+      - "cup_with_handle"
+    components:
+      - name: cup_left
+        type: peak
+        required: true
+      - name: cup_bottom
+        type: trough
+        required: true
+      - name: cup_right
+        type: peak
+        required: true
+      - name: handle
+        type: consolidation
+        required: true
+    validation_rules:
+      - "abs(cup_left.high - cup_right.high) < threshold"
+      - "cup_bottom.low < cup_left.high"
+    min_confidence: 0.6
+    
+  channel_up:
+    name: "Ascending Channel"
+    category: continuation
+    direction: bullish
+    description: "A bullish channel with parallel upward-sloping trendlines"
+    aliases:
+      - "ascending_channel"
+      - "rising_channel"
+    components:
+      - name: upper_trendline
+        type: trendline
+        required: true
+      - name: lower_trendline
+        type: trendline
+        required: true
+    validation_rules:
+      - "upper_trendline.slope > 0"
+      - "lower_trendline.slope > 0"
+      - "abs(upper_trendline.slope - lower_trendline.slope) < threshold"
+    min_confidence: 0.5
+    
+  channel_down:
+    name: "Descending Channel"
+    category: continuation
+    direction: bearish
+    description: "A bearish channel with parallel downward-sloping trendlines"
+    aliases:
+      - "descending_channel"
+      - "falling_channel"
+    components:
+      - name: upper_trendline
+        type: trendline
+        required: true
+      - name: lower_trendline
+        type: trendline
+        required: true
+    validation_rules:
+      - "upper_trendline.slope < 0"
+      - "lower_trendline.slope < 0"
+      - "abs(upper_trendline.slope - lower_trendline.slope) < threshold"
+    min_confidence: 0.5
+
+  # ===========================================
+  # TRIANGLE PATTERNS (BILATERAL/CONTINUATION)
+  # ===========================================
+  
+  ascending_triangle:
+    name: "Ascending Triangle"
+    category: continuation
+    direction: bullish
+    description: "A bullish pattern with horizontal resistance and rising support"
+    aliases:
+      - "asc_triangle"
+      - "rising_triangle"
+    components:
+      - name: horizontal_resistance
+        type: resistance
+        required: true
+      - name: rising_support
+        type: trendline
+        required: true
+      - name: apex
+        type: point
+        required: false
+    validation_rules:
+      - "abs(horizontal_resistance.slope) < 5"
+      - "rising_support.slope > 10"
+    min_confidence: 0.5
+    
+  descending_triangle:
+    name: "Descending Triangle"
+    category: continuation
+    direction: bearish
+    description: "A bearish pattern with horizontal support and falling resistance"
+    aliases:
+      - "desc_triangle"
+      - "falling_triangle"
+    components:
+      - name: horizontal_support
+        type: support
+        required: true
+      - name: falling_resistance
+        type: trendline
+        required: true
+      - name: apex
+        type: point
+        required: false
+    validation_rules:
+      - "abs(horizontal_support.slope) < 5"
+      - "falling_resistance.slope < -10"
+    min_confidence: 0.5
+    
+  symmetrical_triangle:
+    name: "Symmetrical Triangle"
+    category: bilateral
+    direction: neutral
+    description: "A neutral pattern with converging trendlines of similar slope"
+    aliases:
+      - "sym_triangle"
+      - "coil"
+      - "Triangle"
+    components:
+      - name: upper_trendline
+        type: trendline
+        required: true
+      - name: lower_trendline
+        type: trendline
+        required: true
+      - name: apex
+        type: point
+        required: false
+    validation_rules:
+      - "upper_trendline.slope < 0"
+      - "lower_trendline.slope > 0"
+      - "abs(abs(upper_trendline.slope) - abs(lower_trendline.slope)) < threshold"
+    min_confidence: 0.5
+
+  # ===========================================
+  # WEDGE PATTERNS
+  # ===========================================
+  
+  rising_wedge:
+    name: "Rising Wedge"
+    category: reversal
+    direction: bearish
+    description: "A bearish pattern with converging upward-sloping trendlines"
+    aliases:
+      - "ascending_wedge"
+    components:
+      - name: upper_trendline
+        type: trendline
+        required: true
+      - name: lower_trendline
+        type: trendline
+        required: true
+    validation_rules:
+      - "upper_trendline.slope > 0"
+      - "lower_trendline.slope > 0"
+      - "lower_trendline.slope > upper_trendline.slope"
+    min_confidence: 0.55
+    
+  falling_wedge:
+    name: "Falling Wedge"
+    category: reversal
+    direction: bullish
+    description: "A bullish pattern with converging downward-sloping trendlines"
+    aliases:
+      - "descending_wedge"
+    components:
+      - name: upper_trendline
+        type: trendline
+        required: true
+      - name: lower_trendline
+        type: trendline
+        required: true
+    validation_rules:
+      - "upper_trendline.slope < 0"
+      - "lower_trendline.slope < 0"
+      - "upper_trendline.slope > lower_trendline.slope"
+    min_confidence: 0.55

@@ -1,0 +1,151 @@
+# Chart Pattern Analysis Framework Configuration
+# Environment variables can override any setting using:
+# PATTERN_ANALYSIS_<SECTION>_<KEY> format
+# Example: PATTERN_ANALYSIS_PREPROCESSING_TARGET_WIDTH=1920
+
+# ============================================
+# PREPROCESSING SETTINGS
+# ============================================
+preprocessing:
+  # Target image dimensions (preserves aspect ratio with padding)
+  target_width: 1280
+  target_height: 720
+  
+  # Color space conversion
+  color_space: "RGB"
+  
+  # Denoising settings
+  denoise:
+    enabled: true
+    # Bilateral filter parameters
+    d: 9                # Diameter of pixel neighborhood
+    sigma_color: 75     # Filter sigma in color space
+    sigma_space: 75     # Filter sigma in coordinate space
+  
+  # UI element masking
+  mask_ui_elements: true
+  
+  # Quality thresholds
+  quality:
+    min_score: 0.3      # Minimum quality score to proceed
+    sharpness_weight: 0.6
+    contrast_weight: 0.4
+
+# ============================================
+# FEATURE EXTRACTION SETTINGS
+# ============================================
+feature_extraction:
+  # Candlestick detection
+  candlesticks:
+    # HSV ranges for bullish (green) candles
+    bullish_hsv_lower: [35, 50, 50]
+    bullish_hsv_upper: [85, 255, 255]
+    # HSV ranges for bearish (red) candles
+    bearish_hsv_lower: [0, 50, 50]
+    bearish_hsv_upper: [10, 255, 255]
+    min_height_ratio: 0.5  # Minimum height/width ratio
+  
+  # Trendline detection (Hough Transform)
+  trendlines:
+    canny_threshold1: 50
+    canny_threshold2: 150
+    hough_threshold: 100
+    min_line_length: 100
+    max_line_gap: 10
+    # Angle filter (degrees from horizontal)
+    min_angle: 5
+    max_angle: 85
+  
+  # Support/Resistance detection
+  support_resistance:
+    peak_distance: 20       # Minimum distance between peaks
+    zone_height: 5          # Height of S/R zones in pixels
+  
+  # Volume profile extraction
+  volume:
+    enabled: true
+    region_ratio: 0.2       # Bottom 20% of chart
+
+# ============================================
+# PATTERN CLASSIFICATION SETTINGS
+# ============================================
+classification:
+  # Confidence thresholds
+  confidence_threshold: 0.3
+  high_confidence_threshold: 0.7
+  
+  # Detection merging (IoU threshold)
+  iou_threshold: 0.5
+  
+  # Rule-based detection settings
+  rules:
+    # Triangle detection
+    triangles:
+      convergence_threshold: 0.1
+      min_line_length: 100
+    
+    # Double top/bottom detection
+    double_patterns:
+      level_tolerance: 20     # Pixels tolerance for similar levels
+    
+    # Head and shoulders detection
+    head_shoulders:
+      shoulder_tolerance: 30  # Pixels tolerance for shoulder heights
+      min_candles: 20         # Minimum candles for pattern
+  
+  # ML model settings (optional)
+  ml_model:
+    enabled: false
+    model_path: null          # Path to YOLO model weights
+    confidence_threshold: 0.5
+
+# ============================================
+# CROSS-VALIDATION SETTINGS
+# ============================================
+cross_validation:
+  enabled: true
+  consensus_threshold: 0.5    # Minimum agreement ratio
+  min_validators: 1           # Minimum validators that must agree
+
+# ============================================
+# OUTPUT SETTINGS
+# ============================================
+output:
+  # Annotation settings
+  annotation:
+    # Colors by pattern category (BGR format for OpenCV)
+    colors:
+      bullish: [0, 255, 0]    # Green
+      bearish: [0, 0, 255]    # Red
+      neutral: [0, 255, 255]  # Yellow
+    line_thickness: 2
+    font_scale: 0.6
+    transparency: 0.3         # Overlay transparency
+  
+  # Report generation
+  reports:
+    include_metadata: true
+    include_timing: true
+    markdown_enabled: true
+    json_enabled: true
+
+# ============================================
+# PATTERN REGISTRY
+# ============================================
+registry:
+  definitions_path: "config/pattern_definitions.yaml"
+  schema_validation: true
+  enable_versioning: true
+
+# ============================================
+# METRICS AND LOGGING
+# ============================================
+metrics:
+  enabled: true
+  history_size: 1000          # Number of results to keep
+  export_path: "data/metrics"
+
+logging:
+  level: "INFO"               # DEBUG, INFO, WARNING, ERROR
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/pattern_analysis.log"
