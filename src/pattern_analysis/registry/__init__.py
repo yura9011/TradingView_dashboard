@@ -5,13 +5,15 @@ Provides centralized management of pattern definitions,
 including loading from YAML, validation, and lookup methods.
 """
 
-from .pattern_registry import (
-    PatternRegistry,
+# Import from modular structure
+from .models import (
     PatternDefinition,
     PatternComponent,
     RegistryValidationError,
     RegistryVersion,
 )
+from .validators import PatternSchemaValidator
+from .registry import PatternRegistry
 
 __all__ = [
     "PatternRegistry",
@@ -19,4 +21,5 @@ __all__ = [
     "PatternComponent",
     "RegistryValidationError",
     "RegistryVersion",
+    "PatternSchemaValidator",
 ]
