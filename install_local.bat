@@ -81,6 +81,7 @@ if errorlevel 1 (
     echo       Reintentando instalacion individual...
     pip install flask pandas openpyxl pydantic python-dotenv PyYAML Pillow selenium accelerate tradingview-screener playwright pytesseract
     pip install "transformers>=4.45.0"
+    pip install ultralytics huggingface_hub
     pip install qwen-vl-utils
 )
 echo       Instalando navegadores de Playwright...

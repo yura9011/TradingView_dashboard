@@ -62,6 +62,13 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+.hypothesis/
+
+# Test output files
+test_output.txt
+detailed_test_output.txt
+full_test_output.txt
+verification_log.txt
 
 # Temporary files
 tmp/
