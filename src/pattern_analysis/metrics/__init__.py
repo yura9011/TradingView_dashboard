@@ -17,7 +17,7 @@ from .tracker import MetricsTracker
 from .calculator import MetricsCalculator
 from .reporter import MetricsReporter
 from .storage import MetricsStorage
-from .collector_new import MetricsCollector
+from .collector import MetricsCollector
 
 __all__ = [
     # Main collector (orchestrator)

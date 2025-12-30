@@ -9,7 +9,7 @@ Requirements:
 - 8.1-8.5: Visual annotation of detected patterns
 """
 
-from .annotator_new import ChartAnnotator
+from .annotator import ChartAnnotator
 from .colors import (
     DEFAULT_COLORS,
     BULLISH_PATTERNS,

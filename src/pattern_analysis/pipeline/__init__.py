@@ -30,7 +30,7 @@ from .preprocessor import (
     ImageCorruptedError,
     ImageTooSmallError,
 )
-from .feature_extractor_new import EdgeBasedFeatureExtractor
+from .feature_extractor import EdgeBasedFeatureExtractor
 from .classifier import HybridPatternClassifier
 from .cross_validator import MultiMethodCrossValidator
 from .executor import PipelineExecutor, StageFailureError

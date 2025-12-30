@@ -18,7 +18,7 @@ from .exceptions import (
 from .schema import ConfigSchemaField, CONFIG_SCHEMA
 from .validators import ConfigValidator
 from .env_parser import EnvConfigParser
-from .manager_new import (
+from .manager import (
     ConfigurationManager,
     get_config_manager,
     get_config,

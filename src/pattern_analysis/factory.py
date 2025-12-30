@@ -27,7 +27,7 @@ from .pipeline.interfaces import (
     Preprocessor,
 )
 from .pipeline.preprocessor import StandardPreprocessor
-from .registry.pattern_registry import PatternRegistry
+from .registry import PatternRegistry
 
 
 logger = logging.getLogger(__name__)
