@@ -31,6 +31,48 @@ preprocessing:
     sharpness_weight: 0.6
     contrast_weight: 0.4
 
+  # Region detection settings (NEW)
+  region_detection:
+    enabled: true
+    min_region_height_pct: 0.1    # Minimum region height as percentage of image
+    volume_position_threshold: 0.7 # Position threshold for volume panel detection
+    separator_threshold: 0.3       # Threshold for detecting horizontal separators
+
+  # Auto-crop settings (NEW)
+  auto_crop:
+    auto_remove_secondary_charts: true  # Enable automatic removal of secondary charts
+    crop_padding: 10                     # Padding around cropped region in pixels
+
+# ============================================
+# TIMEFRAME SETTINGS (NEW)
+# ============================================
+timeframe:
+  default_timeframe: "1Y"           # Default timeframe for analysis (changed from 1M)
+  default_candle_interval: "1D"     # Default candle interval (daily)
+  
+  # Pattern detection adjustments per timeframe
+  adjustments:
+    "1D":
+      min_pattern_candles: 10
+      min_pattern_height_pct: 0.02
+      trend_sensitivity: 0.8
+    "1W":
+      min_pattern_candles: 15
+      min_pattern_height_pct: 0.03
+      trend_sensitivity: 0.7
+    "1M":
+      min_pattern_candles: 20
+      min_pattern_height_pct: 0.04
+      trend_sensitivity: 0.6
+    "1Y":
+      min_pattern_candles: 30
+      min_pattern_height_pct: 0.05
+      trend_sensitivity: 0.5
+    "YTD":
+      min_pattern_candles: 30
+      min_pattern_height_pct: 0.05
+      trend_sensitivity: 0.5
+
 # ============================================
 # FEATURE EXTRACTION SETTINGS
 # ============================================

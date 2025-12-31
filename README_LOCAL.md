@@ -14,6 +14,19 @@ install_local.bat
 - **GPU NVIDIA** (opcional, recomendado para velocidad)
 - **8GB+ VRAM** para Qwen2-VL-2B
 
+## 🔄 Actualizar a Nueva Versión
+
+```bash
+# Actualiza código y reinstala dependencias automáticamente
+update.bat
+```
+
+O manualmente:
+```bash
+git pull
+install_local.bat
+```
+
 ## 📊 Uso
 
 ### Ejecutar análisis

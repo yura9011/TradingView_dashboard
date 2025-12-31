@@ -9,20 +9,24 @@ Requirements:
 - 4.4: Provide detailed error information and allow graceful degradation
 - 4.6: Aggregate results from all stages into a unified AnalysisResult
 - 7.4: Include timestamps for each processing stage
+- 2.3: Pass timeframe config to pattern classifier (chart-analysis-improvements)
 """
 
 import logging
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 
 import numpy as np
 
 from ..models.dataclasses import (
     AnalysisResult,
+    BoundingBox,
+    ChartRegion,
     FeatureMap,
     PatternDetection,
     PreprocessResult,
+    TimeframeConfig,
     ValidationResult,
 )
 from .interfaces import (
@@ -32,6 +36,9 @@ from .interfaces import (
     PipelineStage,
     Preprocessor,
 )
+
+if TYPE_CHECKING:
+    from .enhanced_preprocessor import EnhancedPreprocessResult
 
 
 logger = logging.getLogger(__name__)
@@ -117,7 +124,7 @@ class PipelineExecutor:
         Returns:
             AnalysisResult containing all detections, validations, and metrics
             
-        Requirements: 4.6, 7.4
+        Requirements: 4.6, 7.4, 2.3 (chart-analysis-improvements)
         """
         if config is None:
             config = {}
@@ -136,12 +143,28 @@ class PipelineExecutor:
         validated_detections: List[ValidationResult] = []
         image: Optional[np.ndarray] = None
         
+        # Region analysis fields (chart-analysis-improvements)
+        analyzed_region: Optional[BoundingBox] = None
+        coverage_percentage: float = 100.0
+        excluded_regions: Optional[List[ChartRegion]] = None
+        needs_review: bool = False
+        timeframe_config: Optional[TimeframeConfig] = None
+        
         timestamp = datetime.now().isoformat()
         
         # Stage 1: Preprocessing
         stage_start = time.perf_counter()
         preprocess_result, image = self._execute_preprocessing(image_path, config)
         preprocessing_time_ms = (time.perf_counter() - stage_start) * 1000
+        
+        # Extract region metadata from EnhancedPreprocessResult if available
+        if preprocess_result is not None:
+            analyzed_region, coverage_percentage, excluded_regions, needs_review, timeframe_config = \
+                self._extract_region_metadata(preprocess_result)
+            
+            # Pass timeframe config to classifier config (Requirement 2.3)
+            if timeframe_config is not None:
+                config = self._merge_timeframe_config(config, timeframe_config)
         
         # Stage 2: Feature Extraction
         if preprocess_result is not None:
@@ -174,7 +197,7 @@ class PipelineExecutor:
         # Calculate total time
         total_time_ms = (time.perf_counter() - start_time) * 1000
         
-        # Build and return result
+        # Build and return result with region metadata
         return AnalysisResult(
             image_path=image_path,
             timestamp=timestamp,
@@ -187,8 +210,86 @@ class PipelineExecutor:
             validated_detections=validated_detections,
             feature_map=feature_map,
             config_used=config,
-            detector_status=detector_status
+            detector_status=detector_status,
+            # Region analysis fields (chart-analysis-improvements)
+            analyzed_region=analyzed_region,
+            coverage_percentage=coverage_percentage,
+            excluded_regions=excluded_regions,
+            needs_review=needs_review,
+            timeframe_config=timeframe_config,
         )
+    
+    def _extract_region_metadata(
+        self,
+        preprocess_result: PreprocessResult
+    ) -> Tuple[Optional[BoundingBox], float, Optional[List[ChartRegion]], bool, Optional[TimeframeConfig]]:
+        """
+        Extract region metadata from preprocess result.
+        
+        Checks if the preprocess result is an EnhancedPreprocessResult and
+        extracts region analysis fields if available.
+        
+        Args:
+            preprocess_result: Result from preprocessing stage
+            
+        Returns:
+            Tuple of (analyzed_region, coverage_percentage, excluded_regions, needs_review, timeframe_config)
+        """
+        # Import here to avoid circular imports
+        from .enhanced_preprocessor import EnhancedPreprocessResult
+        
+        if isinstance(preprocess_result, EnhancedPreprocessResult):
+            excluded = None
+            if preprocess_result.crop_result and preprocess_result.crop_result.excluded_regions:
+                excluded = preprocess_result.crop_result.excluded_regions
+            
+            return (
+                preprocess_result.analyzed_region_bounds,
+                preprocess_result.coverage_percentage,
+                excluded,
+                preprocess_result.needs_review,
+                preprocess_result.timeframe_config,
+            )
+        
+        # Return defaults for standard PreprocessResult
+        return None, 100.0, None, False, None
+    
+    def _merge_timeframe_config(
+        self,
+        config: Dict[str, Any],
+        timeframe_config: TimeframeConfig
+    ) -> Dict[str, Any]:
+        """
+        Merge timeframe configuration into the pipeline config.
+        
+        Adds timeframe-specific parameters to the config dictionary
+        for use by the classifier.
+        
+        Args:
+            config: Original configuration dictionary
+            timeframe_config: Timeframe configuration to merge
+            
+        Returns:
+            Updated configuration dictionary with timeframe parameters
+            
+        Requirements: 2.3 (chart-analysis-improvements)
+        """
+        merged = config.copy()
+        
+        # Add timeframe-specific parameters for the classifier
+        merged["min_candles"] = timeframe_config.min_pattern_candles
+        merged["min_height_pct"] = timeframe_config.min_pattern_height_pct
+        merged["trend_sensitivity"] = timeframe_config.trend_sensitivity
+        merged["candle_interval"] = timeframe_config.candle_interval.value
+        merged["timeframe"] = timeframe_config.timeframe.value
+        
+        logger.debug(
+            f"Merged timeframe config: timeframe={timeframe_config.timeframe.value}, "
+            f"min_candles={timeframe_config.min_pattern_candles}, "
+            f"trend_sensitivity={timeframe_config.trend_sensitivity}"
+        )
+        
+        return merged
 
     def _execute_preprocessing(
         self,

@@ -24,10 +24,12 @@ from .manager import (
     get_config,
     get_logger,
 )
+from .timeframe_manager import TimeframeConfigManager
 
 __all__ = [
     # Main class
     "ConfigurationManager",
+    "TimeframeConfigManager",
     
     # Exceptions
     "ConfigurationError",

@@ -30,6 +30,9 @@ from .preprocessor import (
     ImageCorruptedError,
     ImageTooSmallError,
 )
+from .region_detector import ChartRegionDetector
+from .auto_cropper import AutoCropper
+from .enhanced_preprocessor import EnhancedPreprocessor, EnhancedPreprocessResult
 from .feature_extractor import EdgeBasedFeatureExtractor
 from .classifier import HybridPatternClassifier
 from .cross_validator import MultiMethodCrossValidator
@@ -44,6 +47,10 @@ __all__ = [
     "CrossValidator",
     # Implementations
     "StandardPreprocessor",
+    "ChartRegionDetector",
+    "AutoCropper",
+    "EnhancedPreprocessor",
+    "EnhancedPreprocessResult",
     "EdgeBasedFeatureExtractor",
     "HybridPatternClassifier",
     "MultiMethodCrossValidator",
