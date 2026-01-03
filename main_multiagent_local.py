@@ -97,8 +97,23 @@ def main():
         choices=["1D", "1W", "1M", "3M", "6M", "YTD", "1Y", "5Y"],
         help=f"Timeframe for analysis (default: {DEFAULT_TIMEFRAME})"
     )
+    parser.add_argument(
+        "--health-check", "-hc",
+        action="store_true",
+        help="Run system health check and exit"
+    )
     
     args = parser.parse_args()
+    
+    # Health check mode
+    if args.health_check:
+        try:
+            from src.utils import print_health_report
+            is_healthy = print_health_report()
+            sys.exit(0 if is_healthy else 1)
+        except ImportError:
+            print("❌ Módulo de health check no disponible")
+            sys.exit(1)
     
     Path("logs").mkdir(exist_ok=True)
     Path("data/charts").mkdir(parents=True, exist_ok=True)

@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 from pathlib import Path
+import pytest
 from src.screener.chart_capture import get_chart_capture
 from src.agents.specialists.pattern_detector_yolo import get_pattern_detector_yolo
 from src.agents.specialists.levels_calculator_local import LevelsCalculatorAgentLocal
@@ -16,6 +17,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+@pytest.mark.asyncio
+@pytest.mark.skip(reason="Integration test - requires internet and TradingView access")
 async def test_fixes():
     with open("verification_log.txt", "a") as f:
         f.write("\n=== TEST 1: Chart Capture (30m Interval) ===\n")

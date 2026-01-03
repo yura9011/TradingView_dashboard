@@ -5,6 +5,7 @@ Updated to support:
 - 1 Year (1Y) timeframe with Daily (1D) candles
 - EnhancedPreprocessor for region detection and auto-cropping
 - Timeframe-aware configuration
+- Robust error handling and health checks
 """
 
 import json
@@ -19,6 +20,20 @@ from src.database import get_signal_repository
 from src.models import Signal, SignalType, PatternType
 
 from .analyzer import ChartAnalyzer, AnalysisResult
+
+# Import error handling utilities
+try:
+    from src.utils import (
+        check_disk_space,
+        check_database_health,
+        check_internet_connection,
+        print_health_report,
+        AnalysisError,
+        ChartCaptureError,
+    )
+    ERROR_HANDLING_AVAILABLE = True
+except ImportError:
+    ERROR_HANDLING_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -177,8 +192,30 @@ async def run_analysis(
         
     Returns:
         Signal with analysis results
+        
+    Raises:
+        AnalysisError: If critical pre-flight checks fail
     """
     symbol = symbol.strip().upper()
+    
+    # Pre-flight health checks
+    if ERROR_HANDLING_AVAILABLE:
+        # Check disk space
+        ok, msg = check_disk_space()
+        if not ok:
+            logger.error(f"❌ {msg}")
+            raise AnalysisError(msg, "No hay espacio en disco suficiente para guardar resultados")
+        
+        # Check database
+        ok, msg = check_database_health()
+        if not ok:
+            logger.error(f"❌ {msg}")
+            raise AnalysisError(msg, "Error en base de datos - intente eliminar data/signals.db y reiniciar")
+        
+        # Check internet (warning only, don't block)
+        ok, msg = check_internet_connection()
+        if not ok:
+            logger.warning(f"⚠️ {msg}")
     
     logger.info("=" * 60)
     logger.info(f"🚀 Analysis: {symbol}")
@@ -188,10 +225,16 @@ async def run_analysis(
     
     # Step 1: Capture chart with configured timeframe
     logger.info(f"📸 Capturing chart (daily, {range_months} months / {timeframe})...")
-    chart_path, price_range = await capture_chart(
-        symbol, exchange, range_months=range_months
-    )
-    logger.info(f"   Chart saved: {chart_path}")
+    try:
+        chart_path, price_range = await capture_chart(
+            symbol, exchange, range_months=range_months
+        )
+        logger.info(f"   Chart saved: {chart_path}")
+    except Exception as e:
+        logger.error(f"❌ Error capturando chart: {e}")
+        if ERROR_HANDLING_AVAILABLE:
+            raise ChartCaptureError(str(e), f"No se pudo capturar el chart de {symbol}. Verifique su conexión a internet.")
+        raise
     
     # Step 2: Apply enhanced preprocessing (region detection + auto-crop)
     preprocessed_path = chart_path
