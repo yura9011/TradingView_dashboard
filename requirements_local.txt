@@ -21,6 +21,7 @@ selenium>=4.15.0
 playwright>=1.40.0
 opencv-python>=4.8.0
 scikit-learn>=1.3.0
+scikit-image>=0.21.0
 
 # OCR for extracting price levels from charts
 # REQUIRES: Tesseract OCR installed on system

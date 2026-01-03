@@ -19,65 +19,9 @@
 </div>
 
 <div class="detail-grid">
-    <!-- AI Analysis Summary -->
-    <div class="card">
-        <h2>🧠 AI Analysis</h2>
-        <div class="analysis-content">
-            <p>{{ signal.analysis_summary or 'No analysis summary available.' }}</p>
-        </div>
-        
-        <div class="metrics-grid">
-            <div class="metric">
-                <label>Pattern</label>
-                <span>{{ signal.pattern_detected|replace('_', ' ')|title if signal.pattern_detected != 'none' else 'None' }}</span>
-            </div>
-            <div class="metric">
-                <label>Confidence</label>
-                <span class="confidence-value">{{ (signal.pattern_confidence * 100)|int }}%</span>
-            </div>
-            <div class="metric">
-                <label>Trend</label>
-                <span class="{% if signal.trend == 'up' %}trend-up{% elif signal.trend == 'down' %}trend-down{% else %}trend-sideways{% endif %}">
-                    {% if signal.trend == 'up' %}↑ Bullish{% elif signal.trend == 'down' %}↓ Bearish{% else %}→ Sideways{% endif %}
-                </span>
-            </div>
-            <div class="metric">
-                <label>Strength</label>
-                <span>{{ signal.trend_strength|title if signal.trend_strength else 'N/A' }}</span>
-            </div>
-            <div class="metric">
-                <label>Wyckoff</label>
-                <span class="phase-{{ signal.market_phase or 'unclear' }}">{{ signal.market_phase|title if signal.market_phase else 'N/A' }}</span>
-            </div>
-            <div class="metric">
-                <label>Elliott</label>
-                <span>{{ signal.elliott_wave if signal.elliott_wave else 'N/A' }}</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Technical Levels -->
-    <div class="card">
-        <h2>📊 Technical Levels</h2>
-        <div class="levels-grid">
-            <div class="level">
-                <label>Support</label>
-                <span style="color: var(--accent-success);">${{ '%.2f'|format(signal.support_level) if signal.support_level else '—' }}</span>
-            </div>
-            <div class="level">
-                <label>Resistance</label>
-                <span style="color: var(--accent-danger);">${{ '%.2f'|format(signal.resistance_level) if signal.resistance_level else '—' }}</span>
-            </div>
-            <div class="level">
-                <label>Fibonacci</label>
-                <span style="color: var(--accent-info);">{{ signal.fibonacci_level or '—' }}</span>
-            </div>
-        </div>
-    </div>
-
     <!-- Chart -->
     <div class="card" style="grid-column: 1 / -1;">
-        <h2>📈 Annotated Chart</h2>
+        <h2>📈 Chart</h2>
         {% if signal.chart_image_path %}
         {% set path_str = signal.chart_image_path|string %}
         {% set chart_filename = path_str.split('\\')[-1].split('/')[-1] %}
@@ -90,116 +34,169 @@
         {% endif %}
     </div>
 
-    <!-- Detailed Reasoning -->
-    {% if signal.detailed_reasoning %}
-    {% set reasoning = signal.detailed_reasoning|fromjson if signal.detailed_reasoning else {} %}
-    <div class="card reasoning-card">
-        <h2>💡 Detailed Reasoning</h2>
+    <!-- Patterns Detected -->
+    <div class="card" style="grid-column: 1 / -1;">
+        <h2>📊 Patrones Detectados</h2>
         
-        {% if reasoning.pattern and (reasoning.pattern.reasoning or reasoning.pattern.components) %}
-        <div class="reasoning-section">
-            <h3>Pattern Analysis</h3>
-            <p><strong>{{ reasoning.pattern.name|title if reasoning.pattern.name and reasoning.pattern.name != 'none' else 'None detected' }}</strong> 
-               ({{ (reasoning.pattern.confidence * 100)|int }}% confidence)</p>
-            {% if reasoning.pattern.components %}
-            <p><strong>Components:</strong> {{ reasoning.pattern.components }}</p>
-            {% endif %}
-            {% if reasoning.pattern.target %}
-            <p><strong>Target:</strong> {{ reasoning.pattern.target }}</p>
-            {% endif %}
-            {% if reasoning.pattern.invalidation %}
-            <p><strong>Invalidation:</strong> {{ reasoning.pattern.invalidation }}</p>
-            {% endif %}
-            {% if reasoning.pattern.reasoning %}
-            <p class="reasoning-text">{{ reasoning.pattern.reasoning }}</p>
-            {% endif %}
-        </div>
-        {% endif %}
+        {% set reasoning = signal.detailed_reasoning|fromjson if signal.detailed_reasoning else {} %}
+        {% set reference_matches = reasoning.get('pattern', {}).get('reference_matches', []) if reasoning else [] %}
         
-        {% if reasoning.wyckoff and reasoning.wyckoff.phase and reasoning.wyckoff.phase != 'unclear' %}
-        <div class="reasoning-section" style="border-left-color: var(--accent-warning);">
-            <h3>Wyckoff Analysis</h3>
-            <p><strong>Phase:</strong> <span class="phase-{{ reasoning.wyckoff.phase }}">{{ reasoning.wyckoff.phase|title }}</span></p>
-            {% if reasoning.wyckoff.event %}
-            <p><strong>Event:</strong> {{ reasoning.wyckoff.event }}</p>
-            {% endif %}
+        {% if signal.pattern_detected and signal.pattern_detected != 'none' %}
+        <div class="patterns-container">
+            <!-- Main Pattern -->
+            <div class="pattern-card">
+                <div class="pattern-header">
+                    <h3>{{ signal.pattern_detected|replace('_', ' ')|title }}</h3>
+                    <span class="confidence-badge">{{ (signal.pattern_confidence * 100)|int }}% confianza</span>
+                </div>
+                
+                {% if reference_matches %}
+                {% for match in reference_matches %}
+                <div class="reference-section">
+                    <p class="reference-label">
+                        Referencia ({{ (match.best_match.similarity * 100)|int }}% similitud):
+                    </p>
+                    <div class="reference-image-container">
+                        {% set ref_path = match.best_match.reference_path %}
+                        {% set ref_filename = ref_path.split('\\')[-1].split('/')[-1] %}
+                        <img src="/pattern_references/{{ ref_filename }}" 
+                             alt="{{ match.best_match.display_name }}" 
+                             class="reference-image"
+                             onerror="this.style.display='none'">
+                    </div>
+                    <p class="reference-name">{{ match.best_match.display_name }}</p>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="no-reference">Sin imagen de referencia disponible</p>
+                {% endif %}
+            </div>
         </div>
-        {% endif %}
-        
-        {% if reasoning.elliott and (reasoning.elliott.wave or reasoning.elliott.wave_count) %}
-        <div class="reasoning-section" style="border-left-color: var(--accent-success);">
-            <h3>Elliott Wave</h3>
-            {% if reasoning.elliott.wave %}
-            <p><strong>Current Wave:</strong> {{ reasoning.elliott.wave }}</p>
-            {% endif %}
-            {% if reasoning.elliott.wave_count %}
-            <p><strong>Wave Count:</strong> {{ reasoning.elliott.wave_count }}</p>
-            {% endif %}
-        </div>
-        {% endif %}
-        
-        {% if reasoning.levels and (reasoning.levels.support_reason or reasoning.levels.resistance_reason) %}
-        <div class="reasoning-section" style="border-left-color: var(--accent-danger);">
-            <h3>Levels Justification</h3>
-            {% if reasoning.levels.support and reasoning.levels.support_reason %}
-            <p><strong>Support ${{ '%.2f'|format(reasoning.levels.support) }}:</strong> {{ reasoning.levels.support_reason }}</p>
-            {% endif %}
-            {% if reasoning.levels.resistance and reasoning.levels.resistance_reason %}
-            <p><strong>Resistance ${{ '%.2f'|format(reasoning.levels.resistance) }}:</strong> {{ reasoning.levels.resistance_reason }}</p>
-            {% endif %}
-            {% if reasoning.levels.key_level and reasoning.levels.key_level_reason %}
-            <p><strong>Key Level ${{ '%.2f'|format(reasoning.levels.key_level) }}:</strong> {{ reasoning.levels.key_level_reason }}</p>
-            {% endif %}
-            {% if reasoning.levels.fibonacci_confluence %}
-            <p><strong>Fibonacci:</strong> {{ reasoning.levels.fibonacci_confluence }}</p>
-            {% endif %}
-        </div>
+        {% else %}
+        <p style="color: var(--text-muted); text-align: center; padding: 40px;">
+            No se detectaron patrones en este chart
+        </p>
         {% endif %}
     </div>
-    {% endif %}
 
-    <!-- Debug Info -->
+    <!-- Analysis Summary (Simplified) -->
+    <div class="card">
+        <h2>🧠 Resumen</h2>
+        <div class="analysis-content">
+            <p>{{ signal.analysis_summary or 'No analysis summary available.' }}</p>
+        </div>
+    </div>
+
+    <!-- Debug Info (Collapsed) -->
     <div class="card debug-card">
-        <h2>🔧 Raw Data</h2>
+        <h2>🔧 Datos Técnicos</h2>
         <details>
-            <summary>Show JSON</summary>
-            <pre class="debug-json">{{ signal|tojson(indent=2) }}</pre>
+            <summary>Mostrar detalles</summary>
+            <div class="technical-details">
+                <p><strong>Tendencia:</strong> 
+                    {% if signal.trend == 'up' %}↑ Alcista{% elif signal.trend == 'down' %}↓ Bajista{% else %}→ Lateral{% endif %}
+                    ({{ signal.trend_strength|title if signal.trend_strength else 'N/A' }})
+                </p>
+                {% if signal.support_level %}
+                <p><strong>Soporte:</strong> ${{ '%.2f'|format(signal.support_level) }}</p>
+                {% endif %}
+                {% if signal.resistance_level %}
+                <p><strong>Resistencia:</strong> ${{ '%.2f'|format(signal.resistance_level) }}</p>
+                {% endif %}
+            </div>
+            <details style="margin-top: 10px;">
+                <summary>JSON completo</summary>
+                <pre class="debug-json">{{ signal|tojson(indent=2) }}</pre>
+            </details>
         </details>
     </div>
 </div>
 
-<!-- History -->
-{% if history and history|length > 1 %}
-<div class="card history-card" style="margin-top: 20px;">
-    <h2>📜 Analysis History</h2>
-    <table class="history-table">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Confidence</th>
-                <th>Pattern</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for h in history %}
-            <tr {% if h.id == signal.id %}class="current"{% endif %}>
-                <td>{{ h.timestamp[:16] }}</td>
-                <td>
-                    {% if h.signal_type == 'candidate' %}
-                    <span class="badge badge-success" style="font-size: 0.7rem;">Candidate</span>
-                    {% elif h.signal_type == 'not_candidate' %}
-                    <span class="badge badge-danger" style="font-size: 0.7rem;">Not Viable</span>
-                    {% else %}
-                    <span class="badge badge-warning" style="font-size: 0.7rem;">Pending</span>
-                    {% endif %}
-                </td>
-                <td>{{ (h.pattern_confidence * 100)|int }}%</td>
-                <td>{{ h.pattern_detected|replace('_', ' ')|title }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% endif %}
+<style>
+.patterns-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.pattern-card {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.pattern-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.pattern-header h3 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.2rem;
+}
+
+.confidence-badge {
+    background: var(--accent-primary);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.reference-section {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
+.reference-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.reference-image-container {
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+}
+
+.reference-image {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 4px;
+}
+
+.reference-name {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 8px;
+    font-style: italic;
+}
+
+.no-reference {
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
+
+.technical-details {
+    padding: 15px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.technical-details p {
+    margin: 5px 0;
+}
+</style>
 {% endblock %}

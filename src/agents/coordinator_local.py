@@ -27,6 +27,18 @@ try:
 except ImportError:
     YOLO_AVAILABLE = False
 
+# Pattern Reference Comparison imports
+try:
+    from src.pattern_analysis.reference import (
+        ReferenceManager, 
+        RegionExtractor, 
+        PatternMatcher,
+        ProgressLogger
+    )
+    REFERENCE_AVAILABLE = True
+except ImportError:
+    REFERENCE_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 # Default model (2B for RTX 3070 / 8GB VRAM compatibility)
@@ -116,6 +128,9 @@ class CoordinatorAgentLocal:
         self.market = market
         self.use_yolo = use_yolo and YOLO_AVAILABLE
         
+        # Initialize progress logger
+        self.progress = ProgressLogger() if REFERENCE_AVAILABLE else None
+        
         logger.info("Initializing QuantAgents-Local Team...")
         logger.info(f"Model: {self.model_name}")
         logger.info(f"Market: {market.value}")
@@ -139,6 +154,22 @@ class CoordinatorAgentLocal:
         
         # Market data client (configurable market)
         self.screener = ScreenerClient(market=market)
+        
+        # Pattern Reference Comparison (optional)
+        self.reference_manager = None
+        self.region_extractor = None
+        self.pattern_matcher = None
+        
+        if REFERENCE_AVAILABLE:
+            try:
+                self.reference_manager = ReferenceManager()
+                self.reference_manager.load_references()
+                self.region_extractor = RegionExtractor(padding_percent=0.15)
+                self.pattern_matcher = PatternMatcher(self.reference_manager)
+                ref_count = self.reference_manager.get_reference_count()
+                logger.info(f"  📚 Pattern References: {ref_count} images loaded")
+            except Exception as e:
+                logger.warning(f"Failed to initialize pattern references: {e}")
         
         logger.info("All local specialist agents initialized")
     
@@ -272,6 +303,10 @@ class CoordinatorAgentLocal:
         Returns:
             CoordinatedAnalysis with all findings
         """
+        # Start progress logging
+        if self.progress:
+            self.progress.start_analysis(symbol or "chart")
+        
         logger.info(f"Starting QuantAgents-Local analysis for {symbol or 'chart'}")
         
         # ========== STEP 0: GATHER CONTEXT ==========
@@ -279,6 +314,8 @@ class CoordinatorAgentLocal:
         current_date = now.strftime("%Y-%m-%d")
         day_of_week = now.strftime("%A")
         
+        if self.progress:
+            self.progress.log_step("Obteniendo contexto de mercado...", "📊")
         logger.info("📊 Step 0: Gathering market context...")
         market_data = self._get_market_context(symbol)
         
@@ -317,11 +354,20 @@ class CoordinatorAgentLocal:
             full_context += f" | {additional_context}"
         
         # ========== STEP 1: VISUAL ANALYSIS ==========
+        if self.progress:
+            self.progress.log_model_loading()
+            self.progress.log_pattern_detection()
         logger.info("🔍 Step 1/4: Pattern Detection (local)...")
         pattern_result = self.pattern_detector.analyze(image_path, full_context)
         
+        # Log detected patterns
+        pattern_name = pattern_result.parsed.get("pattern", "none")
+        pattern_conf = pattern_result.parsed.get("confidence", 0.0)
+        if self.progress and pattern_name != "none":
+            self.progress.log_pattern_found(pattern_name, pattern_conf)
+        
         # Save annotated chart if pattern detected (YOLO only)
-        if self.use_yolo and pattern_result.success and pattern_result.parsed.get("pattern", "none") != "none":
+        if self.use_yolo and pattern_result.success and pattern_name != "none":
             try:
                 annotated_path = self.pattern_detector.get_annotated_chart(image_path)
                 if annotated_path:
@@ -329,11 +375,65 @@ class CoordinatorAgentLocal:
             except Exception as e:
                 logger.warning(f"Failed to save annotated chart: {e}")
         
+        # ========== PATTERN REFERENCE COMPARISON ==========
+        reference_matches = []
+        if self.pattern_matcher and pattern_name != "none":
+            if self.progress:
+                self.progress.log_reference_comparison()
+            
+            # Get all detections (YOLO may return multiple)
+            all_detections = pattern_result.parsed.get("all_detections", [])
+            if not all_detections:
+                # Single detection fallback
+                bbox = pattern_result.parsed.get("pattern_box")
+                if bbox:
+                    all_detections = [{
+                        "pattern": pattern_name,
+                        "confidence": pattern_conf,
+                        "box": bbox
+                    }]
+            
+            # Compare each detection with references
+            for detection in all_detections:
+                det_pattern = detection.get("pattern", pattern_name)
+                det_bbox = detection.get("box")
+                det_conf = detection.get("confidence", pattern_conf)
+                
+                if det_bbox:
+                    # Extract region
+                    region = self.region_extractor.extract(image_path, det_bbox)
+                    if region is not None:
+                        # Find matches
+                        matches = self.pattern_matcher.match(region, det_pattern)
+                        if matches:
+                            best_match = matches[0]
+                            if self.progress:
+                                self.progress.log_match_result(det_pattern, best_match.similarity_score)
+                            reference_matches.append({
+                                "pattern": det_pattern,
+                                "confidence": det_conf,
+                                "bbox": det_bbox,
+                                "best_match": {
+                                    "similarity": best_match.similarity_score,
+                                    "reference_path": best_match.reference.image_path,
+                                    "display_name": best_match.reference.display_name,
+                                }
+                            })
+                        elif self.progress:
+                            self.progress.log_no_references(det_pattern)
+        
+        # Store reference matches in pattern result
+        pattern_result.parsed["reference_matches"] = reference_matches
+        
+        if self.progress:
+            self.progress.log_step("Analizando tendencia...", "📈")
         logger.info("📈 Step 2/4: Trend Analysis (local)...")
         trend_result = self.trend_analyst.analyze(image_path, full_context)
         
         vsa_signal = trend_result.parsed.get("vsa_signal", "none")
         
+        if self.progress:
+            self.progress.log_step("Calculando niveles...", "📊")
         logger.info("📊 Step 3/4: Levels Calculation (local)...")
         levels_result = self.levels_calculator.analyze(image_path, full_context)
         
@@ -389,6 +489,12 @@ class CoordinatorAgentLocal:
         logger.info(f"Analysis complete: {analysis.signal_type} (confidence: {analysis.overall_confidence:.0%})")
         if analysis.veto_reason:
             logger.warning(f"Trade VETOED: {analysis.veto_reason}")
+        
+        # Log summary
+        if self.progress:
+            patterns_found = len(pattern_result.parsed.get("all_detections", [])) or (1 if pattern_name != "none" else 0)
+            matches_found = len(reference_matches)
+            self.progress.log_summary(patterns_found, matches_found)
         
         return analysis
     
@@ -493,6 +599,7 @@ class CoordinatorAgentLocal:
                 "confidence": pattern_conf,
                 "description": p.get("description", ""),
                 "box": p.get("pattern_box"),
+                "reference_matches": p.get("reference_matches", []),
             },
             "trend": {
                 "direction": trend_dir,

@@ -56,6 +56,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 REPORTS_DIR = DATA_DIR / "reports"
 CHARTS_DIR = DATA_DIR / "charts"
+PATTERN_REFS_DIR = DATA_DIR / "pattern_references"
 
 
 def get_signals_summary():
@@ -184,6 +185,12 @@ def serve_chart(filename):
 def serve_report_asset(filename):
     """Serve report assets (annotated charts)."""
     return send_from_directory(REPORTS_DIR, filename)
+
+
+@app.route("/pattern_references/<path:filename>")
+def serve_pattern_reference(filename):
+    """Serve pattern reference images from books."""
+    return send_from_directory(PATTERN_REFS_DIR, filename)
 
 
 # ============================================================
