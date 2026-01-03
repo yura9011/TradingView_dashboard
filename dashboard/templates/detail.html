@@ -25,9 +25,18 @@
         {% if signal.chart_image_path %}
         {% set path_str = signal.chart_image_path|string %}
         {% set chart_filename = path_str.split('\\')[-1].split('/')[-1] %}
+        {% set reasoning = signal.detailed_reasoning|fromjson if signal.detailed_reasoning else {} %}
+        {% set annotated_path = reasoning.get('pattern', {}).get('annotated_chart_path', '') if reasoning else '' %}
+        {% set annotated_filename = annotated_path.split('\\')[-1].split('/')[-1] if annotated_path else '' %}
         <div class="chart-container">
+            {% if annotated_filename %}
+            <!-- Show YOLO annotated chart if available (try charts folder first, then reports) -->
+            <img src="/charts/{{ annotated_filename }}" alt="Annotated Chart for {{ signal.symbol }}" class="chart-image"
+                onerror="this.onerror=null; this.src='/reports/{{ chart_filename }}'">
+            {% else %}
             <img src="/reports/{{ chart_filename }}" alt="Chart for {{ signal.symbol }}" class="chart-image"
                 onerror="this.onerror=null; this.src='/charts/{{ chart_filename.replace('_chart.png', '.png') }}'">
+            {% endif %}
         </div>
         {% else %}
         <p style="color: var(--text-muted); text-align: center; padding: 40px;">No chart available</p>
@@ -40,14 +49,20 @@
         
         {% set reasoning = signal.detailed_reasoning|fromjson if signal.detailed_reasoning else {} %}
         {% set reference_matches = reasoning.get('pattern', {}).get('reference_matches', []) if reasoning else [] %}
+        {% set pattern_from_reasoning = reasoning.get('pattern', {}).get('name', 'none') if reasoning else 'none' %}
+        {% set confidence_from_reasoning = reasoning.get('pattern', {}).get('confidence', 0) if reasoning else 0 %}
         
-        {% if signal.pattern_detected and signal.pattern_detected != 'none' %}
+        {# Use pattern from detailed_reasoning if pattern_detected is none #}
+        {% set actual_pattern = signal.pattern_detected if signal.pattern_detected and signal.pattern_detected != 'none' else pattern_from_reasoning %}
+        {% set actual_confidence = signal.pattern_confidence if signal.pattern_confidence else confidence_from_reasoning %}
+        
+        {% if actual_pattern and actual_pattern != 'none' %}
         <div class="patterns-container">
             <!-- Main Pattern -->
             <div class="pattern-card">
                 <div class="pattern-header">
-                    <h3>{{ signal.pattern_detected|replace('_', ' ')|title }}</h3>
-                    <span class="confidence-badge">{{ (signal.pattern_confidence * 100)|int }}% confianza</span>
+                    <h3>{{ actual_pattern|replace('_', ' ')|title }}</h3>
+                    <span class="confidence-badge">{{ (actual_confidence * 100)|int }}% confianza</span>
                 </div>
                 
                 {% if reference_matches %}

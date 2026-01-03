@@ -31,15 +31,16 @@ DEFAULT_RANGE_MONTHS = 12
 PATTERN_ALIASES = {
     PatternType.HEAD_SHOULDERS: [
         "head and shoulders", "head & shoulders", "h&s", "head shoulders",
-        "hch", "head-and-shoulders", "cabeza y hombros"
+        "hch", "head-and-shoulders", "cabeza y hombros", "head_shoulders",
+        "inverse_head_shoulders", "inverse head shoulders"
     ],
     PatternType.DOUBLE_TOP: [
         "double top", "double-top", "doubletop", "m pattern", "m top",
-        "doble techo"
+        "doble techo", "double_top"
     ],
     PatternType.DOUBLE_BOTTOM: [
         "double bottom", "double-bottom", "doublebottom", "w pattern", "w bottom",
-        "doble suelo", "doble piso"
+        "doble suelo", "doble piso", "double_bottom"
     ],
     PatternType.BULLISH_ENGULFING: [
         "bullish engulfing", "bullish-engulfing", "envolvente alcista"
@@ -49,10 +50,12 @@ PATTERN_ALIASES = {
     ],
     PatternType.TRIANGLE: [
         "triangle", "ascending triangle", "descending triangle", 
-        "symmetrical triangle", "triángulo", "triangulo"
+        "symmetrical triangle", "triángulo", "triangulo",
+        "symmetric_triangle", "ascending_triangle", "descending_triangle"
     ],
     PatternType.WEDGE: [
-        "wedge", "rising wedge", "falling wedge", "cuña"
+        "wedge", "rising wedge", "falling wedge", "cuña",
+        "rising_wedge", "falling_wedge"
     ],
 }
 

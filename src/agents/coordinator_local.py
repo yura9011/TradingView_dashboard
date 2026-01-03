@@ -367,13 +367,17 @@ class CoordinatorAgentLocal:
             self.progress.log_pattern_found(pattern_name, pattern_conf)
         
         # Save annotated chart if pattern detected (YOLO only)
+        annotated_chart_path = None
         if self.use_yolo and pattern_result.success and pattern_name != "none":
             try:
-                annotated_path = self.pattern_detector.get_annotated_chart(image_path)
-                if annotated_path:
-                    logger.info(f"✅ Saved annotated YOLO chart: {annotated_path}")
+                annotated_chart_path = self.pattern_detector.get_annotated_chart(image_path)
+                if annotated_chart_path:
+                    logger.info(f"✅ Saved annotated YOLO chart: {annotated_chart_path}")
             except Exception as e:
                 logger.warning(f"Failed to save annotated chart: {e}")
+        
+        # Store annotated chart path in pattern result
+        pattern_result.parsed["annotated_chart_path"] = annotated_chart_path
         
         # ========== PATTERN REFERENCE COMPARISON ==========
         reference_matches = []
@@ -600,6 +604,7 @@ class CoordinatorAgentLocal:
                 "description": p.get("description", ""),
                 "box": p.get("pattern_box"),
                 "reference_matches": p.get("reference_matches", []),
+                "annotated_chart_path": p.get("annotated_chart_path"),
             },
             "trend": {
                 "direction": trend_dir,
