@@ -198,8 +198,51 @@ def serve_pattern_reference(filename):
 # BULK ANALYSIS ENDPOINTS
 # ============================================================
 
+# Configuration for retries
+MAX_RETRIES = 3
+RETRY_DELAY = 5  # seconds between retries
+ANALYSIS_TIMEOUT = 300  # 5 minutes max per symbol
+
+
+def run_analysis_with_retry(loop, symbol: str, use_local: bool, model_name: str, max_retries: int = MAX_RETRIES):
+    """Run analysis with automatic retries on failure."""
+    import asyncio
+    from src.analysis import run_analysis
+    
+    last_error = None
+    
+    for attempt in range(1, max_retries + 1):
+        try:
+            # Run with timeout
+            future = run_analysis(
+                symbol=symbol.strip().upper(),
+                use_local=use_local,
+                model_name=model_name,
+            )
+            result = loop.run_until_complete(
+                asyncio.wait_for(future, timeout=ANALYSIS_TIMEOUT)
+            )
+            return result, None
+            
+        except asyncio.TimeoutError:
+            last_error = f"Timeout después de {ANALYSIS_TIMEOUT}s (intento {attempt}/{max_retries})"
+            logging.warning(f"⏱️ {symbol}: {last_error}")
+            
+        except Exception as e:
+            last_error = f"{type(e).__name__}: {str(e)[:100]} (intento {attempt}/{max_retries})"
+            logging.warning(f"⚠️ {symbol}: {last_error}")
+        
+        # Wait before retry (except on last attempt)
+        if attempt < max_retries:
+            import time
+            logging.info(f"🔄 Reintentando {symbol} en {RETRY_DELAY}s...")
+            time.sleep(RETRY_DELAY)
+    
+    return None, last_error
+
+
 def run_bulk_analysis_worker(symbols: list, use_local_model: bool = True, model_name: str = None):
-    """Worker thread for bulk analysis."""
+    """Worker thread for bulk analysis with retries."""
     import asyncio
     import time
     
@@ -214,8 +257,6 @@ def run_bulk_analysis_worker(symbols: list, use_local_model: bool = True, model_
     asyncio.set_event_loop(loop)
     
     try:
-        # Use unified analysis module
-        from src.analysis import run_analysis
         selected_model = model_name or "Qwen/Qwen2-VL-2B-Instruct"
         
         for i, symbol in enumerate(symbols):
@@ -225,23 +266,24 @@ def run_bulk_analysis_worker(symbols: list, use_local_model: bool = True, model_
             bulk_analysis_state["current_symbol"] = symbol
             bulk_analysis_state["progress"] = i
             
-            try:
-                loop.run_until_complete(run_analysis(
-                    symbol=symbol.strip().upper(),
-                    use_local=use_local_model,
-                    model_name=selected_model,
-                ))
-                bulk_analysis_state["completed"].append(symbol)
-            except Exception as e:
+            # Run with retries
+            result, error = run_analysis_with_retry(
+                loop, symbol, use_local_model, selected_model
+            )
+            
+            if error:
                 bulk_analysis_state["errors"].append({
                     "symbol": symbol,
-                    "error": str(e)
+                    "error": error
                 })
+            else:
+                bulk_analysis_state["completed"].append(symbol)
             
             bulk_analysis_state["progress"] = i + 1
             
-            # Small delay between analyses
-            time.sleep(1)
+            # Small delay between analyses to avoid rate limiting
+            time.sleep(2)
+            
     finally:
         loop.close()
         bulk_analysis_state["running"] = False
