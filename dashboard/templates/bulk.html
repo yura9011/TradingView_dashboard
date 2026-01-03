@@ -13,6 +13,16 @@
     <div class="card">
         <h2>📝 Symbols to Analyze</h2>
         
+        <!-- Watchlist Selector -->
+        <div class="watchlist-selector">
+            <label class="option-label">Watchlist:</label>
+            <div class="watchlist-buttons" id="watchlist-buttons">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+        
+        <div class="divider"><span>or upload/edit manually</span></div>
+        
         <!-- Excel Upload -->
         <div class="upload-area">
             <input type="file" id="excel-file" accept=".xlsx,.xls" style="display:none;">
@@ -27,281 +37,13 @@
             <span id="file-name" class="file-name"></span>
         </div>
         
-        <div class="divider"><span>or edit list below</span></div>
-        
         <!-- Symbols Textarea -->
-        <textarea id="symbols-input" class="symbols-textarea" placeholder="Enter symbols, one per line...">AAL
-AAP
-AAPL
-ABBV
-ABEV
-ABNB
-ABT
-ACN
-ACWI
-ADBE
-ADI
-ADP
-AEG
-AEM
-AI
-AIG
-AKO.B
-ALAB
-AMAT
-AMD
-AMGN
-AMX
-AMZN
-ANF
-ARCO
-ARM
-ASML
-ASR
-ASTS
-AVGO
-AXIA
-AXP
-AZN
-B
-BA
-BABA
-BAK
-BB
-BBD
-BHP
-BIDU
-BIIB
-BIOX
-BITF
-BKNG
-BKR
-BMY
-BP
-BRKB
-BSBR
-C
-CAAP
-CAH
-CAR
-CAT
-CCL
-CDE
-CEG
-COIN
-COST
-CRM
-CRWV
-CSCO
-CVS
-CVX
-CX
-DAL
-DD
-DE
-DECK
-DEO
-DHR
-DIA
-DIS
-DOCU
-DOW
-E
-EA
-EBAY
-ECL
-EFX
-ELP
-EMBJ
-EQNR
-ETSY
-F
-FCX
-FDX
-FSLR
-FXI
-GDX
-GE
-GFI
-GGB
-GILD
-GLOB
-GM
-GOOGL
-GPRK
-GRMN
-GS
-GSK
-GT
-HAL
-HD
-HDB
-HL
-HMC
-HMY
-HOG
-HON
-HOOD
-HPQ
-HSY
-HUT
-HWM
-IBM
-IBN
-IFF
-INFY
-INTC
-IP
-IREN
-ISRG
-ITUB
-JCI
-JD
-JMIA
-JNJ
-JOYY
-JPM
-KGC
-KMB
-KO
-LAC
-LAR
-LLY
-LMT
-LND
-LRCX
-LYG
-MA
-MCD
-MDLZ
-MDT
-MELI
-META
-MMC
-MMM
-MO
-MOS
-MRK
-MRNA
-MRVL
-MSFT
-MSI
-MSTR
-MU
-MUX
-NEM
-NFLX
-NG
-NIO
-NKE
-NOW
-NTES
-NU
-NUE
-NVDA
-NVS
-NXE
-OKLO
-ORCL
-ORLY
-OXY
-PAAS
-PAGS
-PANW
-PATH
-PBI
-PBR
-PCAR
-PDD
-PEP
-PFE
-PG
-PHG
-PINS
-PLTR
-PM
-PSX
-PYPL
-QCOM
-RACE
-RBLX
-RGTI
-RIO
-RIOT
-RKLB
-ROKU
-RTX
-SAP
-SATL
-SBS
-SBUX
-SCCO
-SDA
-SE
-SHEL
-SHOP
-SID
-SLB
-SLV
-SMH
-SNAP
-SNOW
-SONY
-SPCE
-SPGI
-SPOT
-STLA
-STNE
-SUZ
-SWKS
-SYY
-T
-TCOM
-TEAM
-TEM
-TEN
-TGT
-TIMB
-TJX
-TM
-TMO
-TMUS
-TRIP
-TSLA
-TSM
-TV
-TWLO
-TXN
-TXR
-UBER
-UGP
-UL
-UNH
-UNP
-UPST
-URA
-URBN
-USB
-V
-VALE
-VIST
-VIV
-VOD
-VRTX
-VST
-VZ
-WFC
-WMT
-XOM
-XP
-XPEV
-XRX
-XYZ
-ZM</textarea>
+        <textarea id="symbols-input" class="symbols-textarea" placeholder="Selecciona una watchlist arriba o ingresa símbolos manualmente..."></textarea>
         
         <!-- Symbol Count -->
         <div class="symbol-count">
-            <span id="symbol-count">268</span> symbols loaded
+            <span id="symbol-count">0</span> symbols loaded
+            <span id="watchlist-name" class="watchlist-name-badge"></span>
         </div>
         
         <!-- Options -->
@@ -409,6 +151,78 @@ ZM</textarea>
     .bulk-container {
         grid-template-columns: 1fr;
     }
+}
+
+.watchlist-selector {
+    margin-bottom: 20px;
+}
+
+.watchlist-selector .option-label {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.watchlist-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.watchlist-btn {
+    padding: 12px 20px;
+    border: 2px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 180px;
+}
+
+.watchlist-btn:hover {
+    border-color: var(--accent-primary);
+    background: rgba(99, 102, 241, 0.05);
+}
+
+.watchlist-btn.active {
+    border-color: var(--accent-primary);
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--text-primary);
+}
+
+.watchlist-btn .wl-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+}
+
+.watchlist-btn .wl-count {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.watchlist-btn.active .wl-count {
+    color: var(--accent-primary);
+}
+
+.watchlist-name-badge {
+    margin-left: 12px;
+    padding: 4px 10px;
+    background: var(--accent-primary);
+    color: white;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.watchlist-name-badge:empty {
+    display: none;
 }
 
 .upload-area {
@@ -683,12 +497,79 @@ document.addEventListener('DOMContentLoaded', function() {
     const fileName = document.getElementById('file-name');
     const symbolsInput = document.getElementById('symbols-input');
     const symbolCount = document.getElementById('symbol-count');
+    const watchlistName = document.getElementById('watchlist-name');
+    const watchlistButtons = document.getElementById('watchlist-buttons');
     const startBtn = document.getElementById('start-btn');
     const stopBtn = document.getElementById('stop-btn');
     const useLocalModel = document.getElementById('use-local-model');
     const modelSizeOptions = document.getElementById('model-size-options');
     
     let statusInterval = null;
+    let currentWatchlist = null;
+    
+    // Load watchlists on page load
+    async function loadWatchlists() {
+        try {
+            const response = await fetch('/api/watchlists');
+            const data = await response.json();
+            
+            if (data.watchlists && data.watchlists.length > 0) {
+                watchlistButtons.innerHTML = data.watchlists.map(wl => `
+                    <button class="watchlist-btn" data-id="${wl.id}">
+                        <span class="wl-name">${wl.name}</span>
+                        <span class="wl-count">${wl.symbols.length} símbolos</span>
+                    </button>
+                `).join('');
+                
+                // Add click handlers
+                watchlistButtons.querySelectorAll('.watchlist-btn').forEach(btn => {
+                    btn.addEventListener('click', () => selectWatchlist(btn.dataset.id));
+                });
+                
+                // Auto-select default watchlist
+                if (data.default) {
+                    selectWatchlist(data.default);
+                }
+            } else {
+                watchlistButtons.innerHTML = '<span class="text-muted">No hay watchlists configuradas</span>';
+            }
+        } catch (err) {
+            console.error('Error loading watchlists:', err);
+            watchlistButtons.innerHTML = '<span class="text-muted">Error cargando watchlists</span>';
+        }
+    }
+    
+    // Select a watchlist
+    async function selectWatchlist(watchlistId) {
+        try {
+            const response = await fetch(`/api/watchlist/${watchlistId}`);
+            const data = await response.json();
+            
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
+            
+            // Update textarea
+            symbolsInput.value = data.symbols.join('\n');
+            updateSymbolCount();
+            
+            // Update active state
+            watchlistButtons.querySelectorAll('.watchlist-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.id === watchlistId);
+            });
+            
+            // Update badge
+            currentWatchlist = data;
+            watchlistName.textContent = data.name;
+            
+        } catch (err) {
+            console.error('Error loading watchlist:', err);
+        }
+    }
+    
+    // Load watchlists on init
+    loadWatchlists();
     
     // Toggle model size options visibility
     useLocalModel.addEventListener('change', function() {
@@ -707,7 +588,15 @@ document.addEventListener('DOMContentLoaded', function() {
         symbolCount.textContent = symbols.length;
     }
     
-    symbolsInput.addEventListener('input', updateSymbolCount);
+    symbolsInput.addEventListener('input', function() {
+        updateSymbolCount();
+        // Clear watchlist selection when manually editing
+        watchlistButtons.querySelectorAll('.watchlist-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        watchlistName.textContent = 'Personalizado';
+        currentWatchlist = null;
+    });
     updateSymbolCount();
     
     // File upload

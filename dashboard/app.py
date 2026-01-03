@@ -57,6 +57,7 @@ DATA_DIR = PROJECT_ROOT / "data"
 REPORTS_DIR = DATA_DIR / "reports"
 CHARTS_DIR = DATA_DIR / "charts"
 PATTERN_REFS_DIR = DATA_DIR / "pattern_references"
+WATCHLISTS_DIR = DATA_DIR / "watchlists"
 
 
 def get_signals_summary():
@@ -345,6 +346,43 @@ def load_excel_symbols():
 def bulk_analysis_page():
     """Bulk analysis page."""
     return render_template("bulk.html")
+
+
+@app.route("/api/watchlists")
+def get_watchlists():
+    """Get available watchlists."""
+    watchlists_file = WATCHLISTS_DIR / "watchlists.json"
+    
+    if not watchlists_file.exists():
+        return jsonify({"watchlists": [], "default": None})
+    
+    try:
+        with open(watchlists_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/watchlist/<watchlist_id>")
+def get_watchlist(watchlist_id: str):
+    """Get symbols from a specific watchlist."""
+    watchlists_file = WATCHLISTS_DIR / "watchlists.json"
+    
+    if not watchlists_file.exists():
+        return jsonify({"error": "Watchlists not configured"}), 404
+    
+    try:
+        with open(watchlists_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        
+        for wl in data.get("watchlists", []):
+            if wl["id"] == watchlist_id:
+                return jsonify(wl)
+        
+        return jsonify({"error": "Watchlist not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
