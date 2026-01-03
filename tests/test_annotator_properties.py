@@ -117,10 +117,10 @@ class TestAnnotationColorCoding:
         """
         annotator = ChartAnnotator()
         
-        # Get colors for each category
-        reversal_color = annotator._get_color_for_detection(reversal_detection)
-        continuation_color = annotator._get_color_for_detection(continuation_detection)
-        bilateral_color = annotator._get_color_for_detection(bilateral_detection)
+        # Get colors for each category using the public method
+        reversal_color = annotator.get_color_for_category(reversal_detection.category)
+        continuation_color = annotator.get_color_for_category(continuation_detection.category)
+        bilateral_color = annotator.get_color_for_category(bilateral_detection.category)
         
         # Collect all colors with their categories for comparison
         colors_by_category = {
@@ -152,7 +152,8 @@ class TestAnnotationColorCoding:
         detection = data.draw(pattern_detection_with_category_strategy(PatternCategory.BILATERAL))
         annotator = ChartAnnotator()
         
-        color = annotator._get_color_for_detection(detection)
+        # Use the public method to get color for the category
+        color = annotator.get_color_for_category(detection.category)
         
         # Yellow in BGR is (0, 255, 255) or similar yellow variants
         # Check that it's a yellow-ish color (high G and R, low B in RGB terms)
